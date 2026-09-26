@@ -100,6 +100,579 @@ th{background:var(--kertas-2);font-size:12.5px;position:sticky;top:0;z-index:2}
   <div class="bar"><div class="bar-isi">
     <b>Dasbor guru — Try Out UTBK-SNBT</b>
     <div style="display:flex;gap:10px">
+      <span id="statusProses" class="sub" style="display:none;align-self:center"></span>
+      <button id="btnHitung" class="tombol netral" title="Menghitung ulang skor 200–1000, statistik butir, dan rekap try out sekarang juga">Hitung ulang skor</button>
+      <button id="btnMuat" class="tombol netral">Muat ulang data</button>
+      <button id="btnKeluar" class="tombol netral">Keluar</button>
+    </div>
+  </div></div>
+
+  <div class="wadah">
+    <div class="tab">
+      <button data-tab="to" class="aktif">Rekap try out</button>
+      <button data-tab="rekap">Per subtes &amp; analisis</button>
+      <button data-tab="paket">Paket soal</button>
+      <button data-tab="impor">Impor bank soal</button>
+    </div>
+
+    <!-- ===== REKAP TRY OUT ===== -->
+    <div id="tabTO">
+      <div class="penyaring">
+        <div><label for="selTO">Paket try out</label><select id="selTO"></select></div>
+        <div style="min-width:170px"><label for="selJur">Jurusan</label>
+          <select id="selJur"><option value="">Semua</option><option>Saintek</option><option>Soshum</option></select></div>
+        <div style="min-width:190px"><label for="selStatus">Status</label>
+          <select id="selStatus"><option value="">Semua</option><option value="LENGKAP">Lengkap 7 subtes</option><option value="BELUM LENGKAP">Belum lengkap</option></select></div>
+        <button id="btnExportTO" class="tombol">Unduh rekap try out (Excel)</button>
+      </div>
+      <div class="angka" id="angkaTO"></div>
+      <section class="kartu blok">
+        <h3>Peringkat try out</h3>
+        <p class="hint">Skor tiap subtes berskala 200–1000. Skor total = rata-rata tujuh subtes; TPS = rata-rata PU, PPU, PBM, PK; Literasi = rata-rata Literasi Bahasa Indonesia, Literasi Bahasa Inggris, dan PM. Skor ikut bergeser sedikit setiap ada peserta baru.</p>
+        <div class="gulir"><table id="tabelTO" class="tabel-to">
+          <thead><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>PU</th><th>PPU</th><th>PBM</th><th>PK</th>
+            <th>Lit. Indo</th><th>Lit. Ing</th><th>PM</th><th>TPS</th><th>Literasi</th><th>Total</th><th>Selesai</th><th>Laporan</th></tr></thead>
+          <tbody></tbody><tfoot></tfoot>
+        </table></div>
+      </section>
+    </div>
+
+    <!-- ===== REKAP PER SUBTES ===== -->
+    <div id="tabRekap" class="sembunyi">
+      <div class="penyaring">
+        <div>
+          <label for="selPaket">Paket dan subtes</label>
+          <select id="selPaket"><option value="">Semua paket</option></select>
+        </div>
+        <button id="btnExport" class="tombol">Unduh rekap lengkap (Excel)</button>
+        <button id="btnExportPdf" class="tombol sekunder">Versi PDF</button>
+      </div>
+      <div class="angka" id="angka"></div>
+      <div class="kolom">
+        <section class="kartu blok">
+          <h3>Peringkat peserta</h3>
+          <div class="gulir"><table id="tabelPeserta">
+            <thead><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Jurusan</th><th>Subtes</th><th>B</th><th>Sbg</th><th>S</th><th>K</th><th>Skor</th><th>Pelanggaran</th><th>Laporan</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </section>
+        <div style="display:grid;gap:18px">
+          <section class="kartu blok">
+            <h3>Indikator terlemah di kelas</h3>
+            <div id="diagKelas"></div>
+          </section>
+          <section class="kartu blok">
+            <h3>Butir tersulit</h3>
+            <table id="tabelButir"><thead><tr><th>Subtes</th><th>No</th><th>Peserta</th><th>% benar</th></tr></thead><tbody></tbody></table>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAKET ===== -->
+    <div id="tabPaket" class="sembunyi">
+      <section class="kartu blok">
+        <h3>Paket yang ada di database</h3>
+        <p class="hint">Jumlah soal dihitung langsung dari lembar BANK_SOAL. Paket dengan 0 soal tidak akan bisa dimulai siswa.</p>
+        <table id="tabelPaket">
+          <thead><tr><th>Paket</th><th>Urutan</th><th>Subtes</th><th>Jurusan</th><th>Kelompok</th><th>Durasi</th><th>Jumlah soal</th><th>Kode akses</th><th>Aktif</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- ===== IMPOR ===== -->
+    <div id="tabImpor" class="sembunyi">
+      <section class="kartu blok" style="max-width:920px">
+        <h3>Impor bank soal dari JSON</h3>
+        <p class="hint">Unggah berkas <code>.json</code> atau tempel isinya. Tekan <b>Periksa dulu</b> untuk memvalidasi
+          tanpa menyimpan; sistem menyebutkan nomor soal yang bermasalah beserta alasannya.</p>
+        <p class="hint">Tipe soal yang diterima: <code>mcq</code> (pilihan ganda), <code>mcma</code> (pilihan majemuk),
+          <code>kategori</code> (tabel Benar/Salah atau kategori lain), dan <code>isian</code> (isian singkat angka; kunci boleh
+          lebih dari satu bentuk dipisah <code>|</code>, misalnya <code>0,5|1/2</code>). Try out lengkap bisa diimpor sekaligus
+          (<code>bank-TO1-lengkap-7-subtes.json</code>) atau per subtes (<code>TO1-1-PU.json</code> … <code>TO1-7-PM.json</code>).
+          Kolom <code>jurusan</code> pada paket (Saintek/Soshum) membuat subtes hanya muncul bagi siswa jurusan itu; kosong = semua jurusan.</p>
+
+        <label for="inFile">Berkas JSON</label>
+        <input id="inFile" type="file" accept=".json,application/json" style="padding:8px 0;border:none">
+
+        <label for="inJson">Atau tempel isinya di sini</label>
+        <textarea id="inJson" spellcheck="false" placeholder='{"paket":[...],"passages":[...],"soal":[...],"kisi":[...]}'></textarea>
+
+        <label for="selMode">Mode impor</label>
+        <select id="selMode">
+          <option value="tambah">Tambah — soal bernomor sama dilewati, data lama aman</option>
+          <option value="ganti">Ganti — hapus dulu paket/subtes yang sama, lalu impor ulang</option>
+        </select>
+
+        <div class="baris-tombol">
+          <button id="btnPeriksa" class="tombol sekunder">Periksa dulu</button>
+          <button id="btnImpor" class="tombol">Impor ke Spreadsheet</button>
+          <span id="statusImpor" style="font-size:13.5px;color:var(--tinta-3)"></span>
+        </div>
+        <div id="pesanImpor" class="pesan"></div>
+        <div id="galatImpor"></div>
+      </section>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ===== URL web app Apps Script ===== */
+const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbynEA4Vp0QjStA7zrABCG7eMiKrF_LngCK5D4CPbW52kGE0dCXTQmSMCDElcXCQLaElfg/exec' };
+
+const $ = id => document.getElementById(id);
+const teks = s => String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+let kunci = '', data = null, dataJson = null;
+
+/** Permintaan dengan batas waktu dan percobaan ulang otomatis bila server ramai. */
+async function api(action, payload, opsi) {
+  opsi = opsi || {};
+  const maks = opsi.coba || 4;
+  let galat = null;
+  for (let i = 0; i < maks; i++) {
+    if (i > 0) { statusProses('Server ramai, mencoba lagi (' + (i + 1) + '/' + maks + ')…'); await new Promise(r => setTimeout(r, Math.min(12000, 1500 * Math.pow(2, i - 1)) + Math.random() * 1000)); }
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const h = setTimeout(() => ctrl && ctrl.abort(), opsi.batasMs || 120000);
+    try {
+      const r = await fetch(CONFIG.API, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ action, adminKey: kunci }, payload || {})), redirect: 'follow',
+        signal: ctrl ? ctrl.signal : undefined
+      });
+      const mentah = await r.text();
+      let d;
+      try { d = JSON.parse(mentah); }
+      catch (e) {
+        galat = new Error('Balasan API bukan JSON. Bila terus terjadi, pastikan deployment diatur "Anyone" dan URL /exec benar.');
+        continue;
+      }
+      if (d.ok) { statusProses(''); return d; }
+      galat = new Error(d.error || 'Permintaan gagal.'); galat.data = d; galat.kode = d.kode || '';
+      if (galat.kode !== 'SIBUK') { galat.akhir = true; throw galat; }
+    } catch (e) {
+      if (e.akhir) { statusProses(''); throw e; }
+      if (galat !== e) galat = e.name === 'AbortError' ? new Error('Server terlalu lama merespons.') :
+        (e.kode ? e : new Error('Tidak dapat menghubungi API. Periksa jaringan, URL /exec, dan pastikan deployment diatur "Anyone".'));
+    } finally { clearTimeout(h); }
+  }
+  statusProses('');
+  throw galat;
+}
+
+function statusProses(t) {
+  const el = document.getElementById('statusProses');
+  if (el) { el.textContent = t; el.style.display = t ? '' : 'none'; }
+}
+
+const LABEL_LOG = { pindah_tab: 'pindah tab', keluar_fokus: 'hilang fokus', salin: 'salin', tempel: 'tempel',
+  potong: 'potong', klik_kanan: 'klik kanan', cetak: 'cetak', muat_ulang: 'muat ulang', lain: 'lainnya' };
+
+function unduhBase64(b64, nama, mime) {
+  const bin = atob(b64), buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([buf], { type: mime }));
+  const a = document.createElement('a'); a.href = url; a.download = nama; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ===================== MASUK ===================== */
+$('btnMasuk').onclick = async () => {
+  kunci = $('inKunci').value;
+  $('pesanMasuk').className = 'pesan';
+  $('btnMasuk').disabled = true;
+  try {
+    await muat();
+    sessionStorage.setItem('to_admin', kunci);
+    $('layarMasuk').classList.add('sembunyi');
+    $('layarUtama').classList.remove('sembunyi');
+  } catch (e) {
+    $('pesanMasuk').className = 'pesan galat'; $('pesanMasuk').textContent = e.message;
+  } finally { $('btnMasuk').disabled = false; }
+};
+$('inKunci').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnMasuk').click(); });
+
+$('btnTes').onclick = async () => {
+  $('pesanMasuk').className = 'pesan info';
+  $('pesanMasuk').textContent = 'Menghubungi API…';
+  try {
+    const d = await api('ping', {});
+    $('pesanMasuk').className = 'pesan sukses';
+    $('pesanMasuk').textContent = 'API aktif. Spreadsheet: ' + d.spreadsheet +
+      (d.sheetKurang && d.sheetKurang.length ? ' — sheet belum ada: ' + d.sheetKurang.join(', ') + '. Jalankan setupSpreadsheet().' : ' — semua sheet lengkap.');
+  } catch (e) {
+    $('pesanMasuk').className = 'pesan galat'; $('pesanMasuk').textContent = e.message;
+  }
+};
+
+$('btnKeluar').onclick = () => { sessionStorage.clear(); location.reload(); };
+async function denganTombol(b, label, kerja) {
+  const asli = b.textContent; b.disabled = true; b.textContent = label;
+  try { return await kerja(); } catch (e) { alert(e.message); } finally { b.disabled = false; b.textContent = asli; }
+}
+$('btnMuat').onclick = () => denganTombol($('btnMuat'), 'Memuat…', muat);
+$('btnHitung').onclick = () => denganTombol($('btnHitung'), 'Menghitung…', async () => {
+  const r = await api('adminRefresh', {}, { batasMs: 300000, coba: 2 });
+  await muat();
+  statusProses('Skor diperbarui' + (r.proses && r.proses.ditutup ? '; ' + r.proses.ditutup + ' sesi kedaluwarsa ditutup' : '') + '.');
+  setTimeout(() => statusProses(''), 6000);
+});
+
+document.querySelectorAll('.tab button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab button').forEach(x => x.classList.toggle('aktif', x === b));
+  $('tabTO').classList.toggle('sembunyi', b.dataset.tab !== 'to');
+  $('tabRekap').classList.toggle('sembunyi', b.dataset.tab !== 'rekap');
+  $('tabPaket').classList.toggle('sembunyi', b.dataset.tab !== 'paket');
+  $('tabImpor').classList.toggle('sembunyi', b.dataset.tab !== 'impor');
+});
+
+$('selPaket').onchange = () => muat().catch(e => alert(e.message));
+
+/* ===================== DATA ===================== */
+async function muat() {
+  const nilai = $('selPaket').value;
+  const [paketId, subtesId] = nilai ? nilai.split('|') : ['', ''];
+  data = await api('adminSummary', { paketId, subtesId });
+  isiPilihanPaket(nilai);
+  gambar();
+  gambarPaket();
+  await muatTO();
+}
+
+/* ===================== REKAP TRY OUT ===================== */
+let dataTO = null;
+const KODE_TO = ['PU', 'PPU', 'PBM', 'PK', 'LIT_INDO', 'LIT_ING', 'PM'];
+
+async function muatTO() {
+  const s = $('selTO'), lama = s.value;
+  const daftar = (data.paketTO || []);
+  s.innerHTML = daftar.length ? daftar.map(id => {
+    const p = data.paketList.find(x => x.paket_id === id) || {};
+    return `<option value="${teks(id)}">${teks(p.nama_paket || id)} (${teks(id)})</option>`;
+  }).join('') : '<option value="">Belum ada paket try out</option>';
+  if (lama && daftar.includes(lama)) s.value = lama;
+  const pilihan = $('selPaket').value.split('|')[0];
+  if (!s.value) dataTO = { hasilTO: [] };
+  else if (!$('selPaket').value || pilihan === s.value)       // pakai data yang sudah dimuat, hemat satu permintaan
+    dataTO = Object.assign({}, data, { hasilTO: (data.hasilTO || []).filter(r => String(r.paket_id) === s.value) });
+  else dataTO = await api('adminSummary', { paketId: s.value });
+  gambarTO();
+}
+
+function rata(arr) {
+  const v = arr.filter(x => x !== '' && x !== null && x !== undefined && !isNaN(Number(x))).map(Number);
+  return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : '—';
+}
+
+function gambarTO() {
+  const jur = $('selJur').value, st = $('selStatus').value;
+  const rows = dataTO.hasilTO.filter(r => (!jur || r.jurusan === jur) && (!st || r.status === st));
+  const lengkap = rows.filter(r => r.status === 'LENGKAP');
+  const total = lengkap.map(r => Number(r.skor_total));
+  $('angkaTO').innerHTML = `
+    <div class="kartu"><b>${rows.length}</b><span>Peserta (sudah mulai)</span></div>
+    <div class="kartu"><b>${lengkap.length}</b><span>Selesai 7 subtes</span></div>
+    <div class="kartu"><b>${rata(total)}</b><span>Rata-rata skor total</span></div>
+    <div class="kartu"><b>${total.length ? Math.max(...total) : '—'}</b><span>Skor total tertinggi</span></div>
+    <div class="kartu"><b>${rata(lengkap.map(r => r.skor_tps))}</b><span>Rata-rata TPS</span></div>
+    <div class="kartu"><b>${rata(lengkap.map(r => r.skor_literasi))}</b><span>Rata-rata Literasi</span></div>
+    <div class="kartu"><b>${(dataTO.statistik && dataTO.statistik.sedangBerjalan) || 0}</b><span>Subtes sedang dikerjakan</span></div>
+    <div class="kartu"><b>${dataTO.diperbarui ? new Date(dataTO.diperbarui).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—'}</b><span>Skor terakhir dihitung</span></div>`;
+  const sel = v => (v === '' || v === null || v === undefined) ? '<span class="sub">—</span>' : v;
+  $('tabelTO').querySelector('tbody').innerHTML = rows.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td>${teks(r.nama)}<br><span class="sub">${teks(r.nisn)}</span></td>
+      <td>${teks(r.tingkat || r.kelas)}</td><td>${teks(r.jurusan) || '<span class="sub">—</span>'}</td>
+      ${KODE_TO.map(k => `<td>${sel(r['skor_' + k])}</td>`).join('')}
+      <td>${sel(r.skor_tps)}</td><td>${sel(r.skor_literasi)}</td><td class="total">${sel(r.skor_total)}</td>
+      <td>${r.status === 'LENGKAP' ? '<span class="tanda hijau">7/7</span>' : `<span class="tanda">${r.subtes_selesai}/${r.subtes_total}</span>`}</td>
+      <td style="white-space:nowrap">
+        <button class="tombol netral kecil" data-to="${teks(r.nisn)}" data-fmt="pdf">PDF</button>
+        <button class="tombol netral kecil" data-to="${teks(r.nisn)}" data-fmt="xlsx">Excel</button></td>
+    </tr>`).join('') || '<tr><td colspan="16" style="color:var(--tinta-3);text-align:left">Belum ada peserta pada paket ini.</td></tr>';
+  $('tabelTO').querySelector('tfoot').innerHTML = rows.length ? `<tr><td></td><td style="text-align:left">Rata-rata</td><td></td><td></td>
+      ${KODE_TO.map(k => `<td>${rata(rows.map(r => r['skor_' + k]))}</td>`).join('')}
+      <td>${rata(rows.map(r => r.skor_tps))}</td><td>${rata(rows.map(r => r.skor_literasi))}</td><td>${rata(rows.map(r => r.skor_total))}</td><td></td><td></td></tr>` : '';
+  $('tabelTO').querySelectorAll('[data-to]').forEach(b => b.onclick = async () => {
+    const t = b.textContent; b.disabled = true; b.textContent = '…';
+    try {
+      const d = await api('exportReportTO', { nisn: b.dataset.to, paketId: $('selTO').value, format: b.dataset.fmt });
+      unduhBase64(d.base64, d.filename, d.mime);
+    } catch (e) { alert(e.message); }
+    finally { b.disabled = false; b.textContent = t; }
+  });
+}
+$('selTO').onchange = () => muatTO().catch(e => alert(e.message));
+$('selJur').onchange = gambarTO;
+$('selStatus').onchange = gambarTO;
+$('btnExportTO').onclick = async () => {
+  const b = $('btnExportTO'); if (!$('selTO').value) return;
+  const t = b.textContent; b.disabled = true; b.textContent = 'Menyiapkan…';
+  try {
+    const d = await api('adminExport', { paketId: $('selTO').value, format: 'xlsx' });
+    unduhBase64(d.base64, d.filename, d.mime);
+  } catch (e) { alert(e.message); }
+  finally { b.disabled = false; b.textContent = t; }
+};
+
+function isiPilihanPaket(terpilih) {
+  const s = $('selPaket');
+  s.innerHTML = '<option value="">Semua paket</option>';
+  data.paketList.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.paket_id + '|' + p.subtes_id;
+    o.textContent = p.nama_paket + ' — ' + p.subtes_nama + ' (' + p.jumlah_soal + ' soal)';
+    s.appendChild(o);
+  });
+  if (terpilih) s.value = terpilih;
+}
+
+const warna = p => p >= 75 ? 'var(--benar)' : (p >= 50 ? 'var(--ragu)' : 'var(--salah)');
+
+function gambar() {
+  const st = data.statistik;
+  $('angka').innerHTML = `
+    <div class="kartu"><b>${st.jumlah}</b><span>Peserta selesai</span></div>
+    <div class="kartu"><b>${st.rataSkor}</b><span>Rata-rata skor</span></div>
+    <div class="kartu"><b>${st.tertinggi}</b><span>Skor tertinggi</span></div>
+    <div class="kartu"><b>${st.terendah}</b><span>Skor terendah</span></div>`;
+
+  $('tabelPeserta').querySelector('tbody').innerHTML = data.peserta.map(function (p, i) {
+    const rinci = Object.keys(p.rincian_pelanggaran)
+      .map(k => (LABEL_LOG[k] || k) + ' ' + p.rincian_pelanggaran[k] + '×').join(', ');
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${teks(p.nama)}<br><span style="color:var(--tinta-3);font-size:12px">${teks(p.nisn)}</span></td>
+      <td>${teks(p.kelas)}</td><td>${teks(p.jurusan)}</td><td>${teks(p.subtes_id)}${p.catatan === 'DIAKHIRI' ? '<br><span class="tanda">tidak dikerjakan</span>' : (p.catatan === 'WAKTU_HABIS' ? '<br><span class="tanda">waktu habis</span>' : '')}</td>
+      <td>${p.benar}</td><td>${p.sebagian}</td><td>${p.salah}</td><td>${p.kosong}</td>
+      <td><b>${p.skor}</b></td>
+      <td>${p.pelanggaran
+        ? `<span class="tanda bahaya">${p.pelanggaran}</span><br><span style="font-size:11.5px;color:var(--tinta-3)">${teks(rinci)}</span>`
+        : '<span class="tanda hijau">0</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="tombol netral" style="padding:5px 9px;font-size:12px" data-unduh="${teks(p.sesi_id)}" data-fmt="pdf">PDF</button>
+        <button class="tombol netral" style="padding:5px 9px;font-size:12px" data-unduh="${teks(p.sesi_id)}" data-fmt="xlsx">Excel</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" style="color:var(--tinta-3)">Belum ada peserta yang menyelesaikan ujian.</td></tr>';
+
+  $('tabelPeserta').querySelectorAll('[data-unduh]').forEach(b => b.onclick = async () => {
+    const t = b.textContent; b.disabled = true; b.textContent = '…';
+    try {
+      const d = await api('exportReport', { sesiId: b.dataset.unduh, format: b.dataset.fmt });
+      unduhBase64(d.base64, d.filename, d.mime);
+    } catch (e) { alert(e.message); }
+    finally { b.disabled = false; b.textContent = t; }
+  });
+
+  $('diagKelas').innerHTML = data.diagnosaKelas.map(d => `
+    <div class="diag">
+      <div class="atas"><span>${teks(d.kisi_label)}</span><b>${d.persen}%</b></div>
+      <div class="rel"><i style="width:${d.persen}%;background:${warna(d.persen)}"></i></div>
+    </div>`).join('') || '<p class="hint">Belum ada data.</p>';
+
+  $('tabelButir').querySelector('tbody').innerHTML = data.butirTersulit.map(b =>
+    `<tr><td>${teks(b.subtes_id)}</td><td>${b.no}</td><td>${b.n}</td><td style="color:${warna(b.p * 100)}"><b>${Math.round(b.p * 100)}%</b></td></tr>`
+  ).join('') || '<tr><td colspan="4" style="color:var(--tinta-3)">Belum ada data.</td></tr>';
+}
+
+function gambarPaket() {
+  $('tabelPaket').querySelector('tbody').innerHTML = data.paketList.map(p => `<tr>
+    <td>${teks(p.nama_paket)}<br><span style="color:var(--tinta-3);font-size:12px">${teks(p.paket_id)}</span></td>
+    <td>${p.urutan || '—'}</td><td>${teks(p.subtes_nama)}<br><span class="sub">${teks(p.subtes_id)}</span></td><td>${teks(p.jurusan) || 'Semua'}</td><td>${teks(p.kelompok) || '—'}</td><td>${p.durasi_menit} menit</td>
+    <td><b style="color:${p.jumlah_soal ? 'var(--benar)' : 'var(--salah)'}">${p.jumlah_soal}</b></td>
+    <td><code>${teks(p.kode_akses) || '—'}</code></td>
+    <td>${String(p.aktif).toUpperCase() === 'TIDAK' ? '<span class="tanda">nonaktif</span>' : '<span class="tanda hijau">aktif</span>'}</td>
+    <td><button class="tombol bahaya" style="padding:5px 10px;font-size:12.5px"
+      data-hapus="${teks(p.paket_id)}|${teks(p.subtes_id)}">Hapus subtes</button></td>
+  </tr>`).join('') || '<tr><td colspan="10" style="color:var(--tinta-3)">Belum ada paket.</td></tr>';
+
+  $('tabelPaket').querySelectorAll('[data-hapus]').forEach(b => b.onclick = async () => {
+    const [paketId, subtesId] = b.dataset.hapus.split('|');
+    if (!confirm('Hapus soal dan pengaturan subtes ' + subtesId + ' pada paket ' + paketId +
+      '? Hasil peserta yang sudah ada tidak ikut terhapus.')) return;
+    b.disabled = true;
+    try {
+      const d = await api('hapusPaket', { paketId, subtesId });
+      alert('Terhapus: ' + d.hasil.soal + ' soal, ' + d.hasil.paket + ' baris paket, ' + d.hasil.statistik + ' statistik butir.');
+      await muat();
+    } catch (e) { alert(e.message); b.disabled = false; }
+  });
+}
+
+/* ===================== EKSPOR REKAP ===================== */
+async function eksporRekap(format, tombol) {
+  const nilai = $('selPaket').value;
+  const [paketId, subtesId] = nilai ? nilai.split('|') : ['', ''];
+  const t = tombol.textContent; tombol.disabled = true; tombol.textContent = 'Menyiapkan…';
+  try {
+    const d = await api('adminExport', { paketId, subtesId, format });
+    unduhBase64(d.base64, d.filename, d.mime);
+  } catch (e) { alert(e.message); }
+  finally { tombol.disabled = false; tombol.textContent = t; }
+}
+$('btnExport').onclick = () => eksporRekap('xlsx', $('btnExport'));
+$('btnExportPdf').onclick = () => eksporRekap('pdf', $('btnExportPdf'));
+
+/* ===================== IMPOR ===================== */
+$('inFile').onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  $('inJson').value = await f.text();
+  tampilPesan('info', 'Berkas "' + f.name + '" dimuat (' + Math.round(f.size / 1024) + ' KB). Tekan Periksa dulu.');
+};
+
+function ambilJson() {
+  const mentah = $('inJson').value.trim();
+  if (!mentah) throw new Error('Belum ada JSON. Unggah berkas atau tempel isinya.');
+  try { return JSON.parse(mentah); }
+  catch (e) { throw new Error('JSON tidak valid: ' + e.message + '. Periksa tanda koma atau kurung yang kurang.'); }
+}
+
+function tampilPesan(jenis, isi) {
+  $('pesanImpor').className = 'pesan ' + jenis;
+  $('pesanImpor').textContent = isi;
+}
+
+function tampilPeriksa(p) {
+  let html = '';
+  if (p.galat && p.galat.length) {
+    html += `<div class="daftar-galat merah"><b>${p.totalGalat} galat — impor ditolak sampai diperbaiki</b><ul>`
+      + p.galat.map(g => '<li>' + teks(g) + '</li>').join('')
+      + (p.totalGalat > p.galat.length ? `<li>… dan ${p.totalGalat - p.galat.length} lainnya</li>` : '')
+      + '</ul></div>';
+  }
+  if (p.peringatan && p.peringatan.length) {
+    html += `<div class="daftar-galat kuning"><b>${p.totalPeringatan} peringatan — impor tetap bisa dilanjutkan</b><ul>`
+      + p.peringatan.map(g => '<li>' + teks(g) + '</li>').join('')
+      + (p.totalPeringatan > p.peringatan.length ? `<li>… dan ${p.totalPeringatan - p.peringatan.length} lainnya</li>` : '')
+      + '</ul></div>';
+  }
+  $('galatImpor').innerHTML = html;
+}
+
+$('btnPeriksa').onclick = async () => {
+  $('galatImpor').innerHTML = '';
+  $('btnPeriksa').disabled = true;
+  $('statusImpor').textContent = 'Memeriksa…';
+  try {
+    dataJson = ambilJson();
+    const d = await api('cekBank', { data: dataJson });
+    const p = d.periksa, j = p.jumlah;
+    tampilPeriksa(p);
+    tampilPesan(p.valid ? 'sukses' : 'galat',
+      (p.valid ? 'Lolos pemeriksaan. ' : 'Belum lolos. ') +
+      `Terbaca: ${j.paket} paket, ${j.passage} bacaan, ${j.soal} soal, ${j.kisi} indikator, ${j.siswa} siswa.`);
+  } catch (e) {
+    tampilPesan('galat', e.message);
+    if (e.data && e.data.periksa) tampilPeriksa(e.data.periksa);
+  } finally { $('btnPeriksa').disabled = false; $('statusImpor').textContent = ''; }
+};
+
+$('btnImpor').onclick = async () => {
+  $('galatImpor').innerHTML = '';
+  $('btnImpor').disabled = true;
+  $('statusImpor').textContent = 'Mengimpor…';
+  try {
+    dataJson = ambilJson();
+    const mode = $('selMode').value;
+    if (mode === 'ganti' && !confirm('Mode ganti akan menghapus soal, paket, dan bacaan lama untuk paket yang sama sebelum mengimpor. Lanjutkan?')) {
+      $('btnImpor').disabled = false; $('statusImpor').textContent = ''; return;
+    }
+    const d = await api('importBank', { data: dataJson, mode });
+    const h = d.hasil;
+    tampilPeriksa(d.periksa || {});
+    tampilPesan('sukses',
+      `Impor berhasil (mode ${d.mode}). Tersimpan: ${h.paket} paket, ${h.passage} bacaan, ${h.soal} soal, ` +
+      `${h.kisi} indikator, ${h.siswa} siswa.` +
+      (h.soalDilewati ? ` ${h.soalDilewati} soal dilewati karena nomornya sudah ada.` : '') +
+      (h.dihapus ? ` ${h.dihapus} baris lama dihapus.` : ''));
+    await muat();
+  } catch (e) {
+    tampilPesan('galat', e.message);
+    if (e.data && e.data.periksa) tampilPeriksa(e.data.periksa);
+  } finally { $('btnImpor').disabled = false; $('statusImpor').textContent = ''; }
+};
+
+/* ===================== PEMULIHAN SESI ===================== */
+(async function () {
+  const k = sessionStorage.getItem('to_admin');
+  if (!k) return;
+  kunci = k;
+  try {
+    await muat();
+    $('layarMasuk').classList.add('sembunyi');
+    $('layarUtama').classList.remove('sembunyi');
+  } catch (e) { sessionStorage.clear(); }
+})();
+</script>
+</body>
+</html>.pesan.sukses{display:block;background:#E6F4EE;color:var(--benar);border:1px solid #BFE3D2}
+.pesan.info{display:block;background:var(--biru-muda);color:var(--biru);border:1px solid #C9DBEE}
+
+.bar{background:#fff;border-bottom:1px solid var(--garis)}
+.bar-isi{max-width:1320px;margin:0 auto;padding:14px 20px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.wadah{max-width:1320px;margin:0 auto;padding:24px 20px 60px}
+.tab{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab button{border:1px solid var(--garis);background:#fff;color:var(--tinta-2);padding:8px 16px;
+  border-radius:99px;font-weight:600;font-size:14px}
+.tab button.aktif{background:var(--biru);border-color:var(--biru);color:#fff}
+.penyaring{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px}
+.penyaring label{margin:0 0 6px}
+.penyaring>div{min-width:280px}
+.angka{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:20px}
+.angka .kartu{padding:18px}
+.angka b{display:block;font-size:27px;line-height:1.1}
+.angka span{font-size:13px;color:var(--tinta-3)}
+.kolom{display:grid;gap:18px;grid-template-columns:2fr 1fr;align-items:start}
+.blok{padding:20px}
+.blok h3{margin:0 0 14px;font-size:16px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--garis);text-align:left;vertical-align:top}
+th{background:var(--kertas-2);font-size:12.5px;position:sticky;top:0;z-index:2}
+.gulir{max-height:560px;overflow:auto}
+.tanda{font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--kertas-2);color:var(--tinta-2)}
+.tanda.bahaya{background:#FDECEA;color:var(--salah)}
+.tanda.hijau{background:#E6F4EE;color:var(--benar)}
+.diag{margin-bottom:13px}
+.diag .atas{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;gap:8px}
+.rel{height:6px;background:var(--kertas-2);border-radius:99px;overflow:hidden}
+.rel i{display:block;height:100%}
+.daftar-galat{margin:14px 0 0;padding:14px 16px;border-radius:var(--r);font-size:13px;max-height:280px;overflow:auto}
+.daftar-galat.merah{background:#FDECEA;border:1px solid #F3C6C3}
+.daftar-galat.kuning{background:#FCF6E6;border:1px solid #EBD9A8}
+.daftar-galat b{display:block;margin-bottom:6px}
+.daftar-galat ul{margin:0;padding-left:20px}
+.daftar-galat li{margin-bottom:4px}
+.baris-tombol{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.hint{color:var(--tinta-3);font-size:13px;margin:0 0 10px}
+@media(max-width:940px){.kolom{grid-template-columns:1fr}}
+.tabel-to td,.tabel-to th{text-align:center;white-space:nowrap}
+.tabel-to td:nth-child(2),.tabel-to th:nth-child(2){text-align:left;white-space:normal;min-width:170px}
+.tabel-to td.total{font-weight:700;background:#F7F9FC}
+.tabel-to tfoot td{font-weight:700;background:var(--kertas-2);border-top:2px solid var(--garis)}
+.kecil{padding:5px 9px;font-size:12px}
+.sub{color:var(--tinta-3);font-size:12px}
+</style>
+</head>
+<body>
+
+<section id="layarMasuk" class="masuk">
+  <div class="masuk-kotak">
+    <h1>Dasbor guru</h1>
+    <p>Rekap nilai, diagnosis kelas, catatan pengawasan, dan pengelolaan bank soal.</p>
+    <label for="inKunci">Kata sandi admin</label>
+    <input id="inKunci" type="password" placeholder="••••••••">
+    <div id="pesanMasuk" class="pesan"></div>
+    <button id="btnMasuk" class="tombol" style="width:100%;margin-top:18px">Masuk</button>
+    <button id="btnTes" class="tombol netral" style="width:100%;margin-top:9px">Tes koneksi API</button>
+  </div>
+</section>
+
+<section id="layarUtama" class="sembunyi">
+  <div class="bar"><div class="bar-isi">
+    <b>Dasbor guru — Try Out UTBK-SNBT</b>
+    <div style="display:flex;gap:10px">
       <button id="btnMuat" class="tombol netral">Muat ulang data</button>
       <button id="btnKeluar" class="tombol netral">Keluar</button>
     </div>
