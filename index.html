@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- AWAL BERKAS Guru · CBT & Try Out SMAIT Al-Ittihad v5 · build v5-2026-10-21 · hapus semua isi lama, tempel SATU kali -->
+<!-- AWAL BERKAS Guru · CBT & Try Out SMAIT Al-Ittihad v5 · build v5-2026-10-21b · hapus semua isi lama, tempel SATU kali -->
 <html lang="id">
 <head>
 <meta charset="utf-8">
@@ -814,7 +814,7 @@ let BOOT = {};
 try { BOOT = JSON.parse(document.getElementById('dataAwal').textContent); } catch (e) { BOOT = {}; }
 if (!BOOT.url) BOOT.url = URL_GAS;
 const DI_GAS = !!(window.google && google.script && google.script.run);
-const BUILD_HALAMAN = 'v5-2026-10-21';      // diperbarui otomatis saat paket dibuat; harus sama dengan BUILD di Code.gs
+const BUILD_HALAMAN = 'v5-2026-10-21b';      // diperbarui otomatis saat paket dibuat; harus sama dengan BUILD di Code.gs
 /** Halaman yang dipasang di hosting luar: beri peringatan bila versinya tidak sama dengan server (Code.gs). */
 if (!DI_GAS) setTimeout(function () {
   fetch((typeof BOOT !== 'undefined' && BOOT.url) || URL_GAS, { method: 'POST', body: JSON.stringify({ action: 'ping' }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' })
@@ -1138,7 +1138,7 @@ $('btnBaca').onclick = () => tombolProses($('btnBaca'), 'Membaca…', async () =
   if (!f) return pesan('sPesan', 'Pilih berkas .docx atau .json.');
   let soal;
   try {
-    if (/\.json$/i.test(f.name)) { const j = JSON.parse(await f.text()); soal = Array.isArray(j) ? j : (j.questions || j.soal || []); }
+    if (/\.json$/i.test(f.name)) { const j = JSON.parse(await f.text()); soal = Array.isArray(j) ? j : (j.questions || j.soal || []); soal._gambar = gambarDariJson(soal); soal._diTempat = true; }
     else { const r = await bacaDocxDenganGambar(f); soal = uraiTag(r.teks); soal._gambar = r.gambar; }
   } catch (e) { return pesan('sPesan', 'Berkas tidak terbaca: ' + e.message); }
   if (!soal.length) return pesan('sPesan', 'Tidak ada soal terbaca. Pastikan setiap tag di barisnya sendiri dan soal dipisah baris ---.');
@@ -1150,14 +1150,14 @@ $('btnBaca').onclick = () => tombolProses($('btnBaca'), 'Membaca…', async () =
     if (!q.pembahasan) cat.push('Soal ' + (i + 1) + ': tanpa pembahasan');
   });
   const ujian = UJIAN.find(x => x.exam_id === $('sUjian').value);
-  const nGambar = (JSON.stringify(soal).match(/\[\[GAMBAR_DOCX:/g) || []).length;
+  const nGambar = (JSON.stringify(soal).match(/\[\[GAMBAR_DOCX:/g) || []).length, asalGambar = soal._diTempat ? 'berkas JSON' : 'berkas Word';
   const ok = await tanya('Unggah ' + soal.length + ' soal?', `<p>Ke ujian <b>${teks(ujian.judul_test)}</b>.</p>
-    ${nGambar ? `<p>🖼 <b>${nGambar} gambar</b> dari berkas Word akan diunggah ke Google Drive sekolah dan dipasang langsung pada soalnya.</p>` : ''}
+    ${nGambar ? `<p>🖼 <b>${nGambar} gambar</b> dari ${asalGambar} akan diunggah ke Google Drive sekolah dan dipasang langsung pada soalnya.</p>` : ''}
     <p>${Object.keys(per).map(k => teks(k) + ': ' + per[k]).join(' · ')}</p>
     ${cat.length ? `<p style="color:#8A6110"><b>${cat.length} catatan:</b><br>${cat.slice(0, 15).map(teks).join('<br>')}${cat.length > 15 ? '<br>…' : ''}</p>` : '<p style="color:#1B7A55">Semua soal lengkap.</p>'}`, 'Unggah');
   if (!ok) return;
   try {
-    if (nGambar) await pasangGambarDocx(soal, soal._gambar || [], $('sUjian').value, t => pesan('sPesan', t, 'info'));
+    if (nGambar) await pasangGambarDocx(soal, soal._gambar || [], $('sUjian').value, t => pesan('sPesan', t, 'info'), !!soal._diTempat);
     const d = await api('cbtSoal', { op: 'impor', exam_id: $('sUjian').value, soal: soal }, { coba: 2 });
     pesan('sPesan', d.pesan, 'info'); $('sBerkas').value = ''; await muatSoal(); muatUjian();
   } catch (e) { pesan('sPesan', e.message + (e.data && e.data.galat ? '\n\n' + e.data.galat.join('\n') : '')); }
@@ -1470,6 +1470,12 @@ function htmlMedia(u) {
   return `<div class="cbt-media"><img src="${teks(src[0])}" alt="Gambar soal" loading="lazy" referrerpolicy="no-referrer" data-cadangan="${cad}" onerror="mediaCadangan(this)"></div>`;
 }
 
+/** Label kolom tabel B/S: baris "[KOLOM: Label 1 | Label 2]" di teks soal (B = kolom 1, S = kolom 2), mis. "[KOLOM: Fact | Opinion]".
+ *  Tanpa baris itu kolomnya Benar / Salah. Baris [KOLOM: …] tidak ditampilkan sebagai teks. */
+function kolomBS(s, bawaan) {
+  const m = String(s || '').match(/^[ \t]*\[KOLOM[ \t]*:[ \t]*([^|\]\n]+?)[ \t]*\|[ \t]*([^|\]\n]+?)[ \t]*\][ \t]*$/im);
+  return m ? [m[1], m[2]] : (bawaan || ['Benar', 'Salah']);
+}
 function renderTeks(s) {
   const baris = String(s === undefined || s === null ? '' : s).replace(/\r\n?/g, '\n').split('\n');
   let html = '', para = [], tabel = [];
@@ -1480,6 +1486,7 @@ function renderTeks(s) {
   };
   const tutupTabel = () => { if (tabel.length) html += tabelHTML(tabel); tabel = []; };
   baris.forEach(b => {
+    if (/^\s*\[KOLOM\s*:[^\]\n]*\]\s*$/i.test(b)) return;                 // label kolom tabel B/S, bukan teks
     // gambar/audio di dalam teks: baris "[GAMBAR: https://…]" atau "[AUDIO: https://…]"
     const m = b.match(/^\s*\[(GAMBAR|AUDIO)\s*:\s*(https:\/\/[^\s\]]+)\s*\]\s*$/i);
     if (m) { tutupPara(); tutupTabel(); html += htmlMedia(m[2].replace(/#(audio|gambar)$/, '') + (m[1].toUpperCase() === 'AUDIO' ? '#audio' : '#gambar')); return; }
@@ -1816,12 +1823,24 @@ async function bacaDocxDenganGambar(berkas) {
   return { teks: baris.join('\n'), gambar: gambar };
 }
 /** Token [[GAMBAR_DOCX:n]]: gambar pertama tiap soal → media soal; gambar berikutnya → baris [GAMBAR: tautan] di tempatnya. */
-async function pasangGambarDocx(soal, gambar, examId, lapor) {
+/** Impor JSON: gambar tertanam "data:image/…;base64,…" (di media_url, atau baris "[GAMBAR: data:image/…]" di teks) diubah menjadi
+ *  token [[GAMBAR_DOCX:n]] lalu diunggah ke Google Drive seperti gambar dari Word. Gambar di dalam teks tetap di tempatnya. */
+function gambarDariJson(soal) {
+  const gambar = [], KOLOM = ['media_url', 'stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan'];
+  const simpan = (mime, b64) => { gambar.push({ mime: mime.toLowerCase(), data: b64.replace(/\s+/g, '') }); return '[[GAMBAR_DOCX:' + (gambar.length - 1) + ']]'; };
+  soal.forEach(q => KOLOM.forEach(k => {
+    if (typeof q[k] !== 'string' || q[k].indexOf('data:image/') < 0) return;
+    if (k === 'media_url') { const m = q[k].trim().match(/^data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/i); if (m) q[k] = simpan(m[1], m[2]); return; }
+    q[k] = q[k].replace(/\[GAMBAR\s*:\s*data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+?)\s*\]/gi, (x, mime, b64) => '\n' + simpan(mime, b64) + '\n');
+  }));
+  return gambar;
+}
+async function pasangGambarDocx(soal, gambar, examId, lapor, diTempat) {
   const POLA = /\[\[GAMBAR_DOCX:(\d+)\]\]/g, KOLOM = ['media_url', 'stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan'];
   const perlu = {}; soal.forEach(q => KOLOM.forEach(k => String(q[k] || '').replace(POLA, (m, n) => { perlu[n] = 1; return m; })));
   const ids = Object.keys(perlu), url = {};
   for (let i = 0; i < ids.length; i++) {
-    lapor('Mengunggah gambar dari Word ' + (i + 1) + '/' + ids.length + '…');
+    lapor('Mengunggah gambar ' + (i + 1) + '/' + ids.length + '…');
     const g = gambar[Number(ids[i])];
     url[ids[i]] = await unggahData(g.data, g.mime, 'docx-gambar-' + (Number(ids[i]) + 1) + '.' + (g.mime.split('/')[1] || 'png'), examId);
   }
@@ -1829,7 +1848,7 @@ async function pasangGambarDocx(soal, gambar, examId, lapor) {
     let utama = null;
     const mm = String(q.media_url || '').match(/\[\[GAMBAR_DOCX:(\d+)\]\]/);
     if (mm) utama = mm[1];
-    else if (!String(q.media_url || '').trim()) for (const k of ['stimulus_text', 'teks_soal']) { const m2 = String(q[k] || '').match(/\[\[GAMBAR_DOCX:(\d+)\]\]/); if (m2) { utama = m2[1]; q[k] = String(q[k]).replace(m2[0], ''); break; } }
+    else if (!diTempat && !String(q.media_url || '').trim()) for (const k of ['stimulus_text', 'teks_soal']) { const m2 = String(q[k] || '').match(/\[\[GAMBAR_DOCX:(\d+)\]\]/); if (m2) { utama = m2[1]; q[k] = String(q[k]).replace(m2[0], ''); break; } }
     if (utama !== null) q.media_url = url[utama];
     KOLOM.forEach(k => { if (k !== 'media_url' && q[k]) q[k] = String(q[k]).replace(POLA, (m, n) => '[GAMBAR: ' + url[n] + ']').replace(/\n{3,}/g, '\n\n').trim(); });
   });
@@ -1873,7 +1892,7 @@ function opsiBahas(q, buka) {
       return `<div class="b-uraian"><b>🎙 Dijawab lisan</b> — persiapan ${q.persiapan_detik || 0} detik, bicara maks. ${q.durasi_detik || 120} detik${q.rekam_ulang === 'Ya' ? ', boleh rekam ulang' : ''}.</div>`;
     case 'TABEL_BS': {
       const k = String(q.kunci_jawaban).split(',');
-      return '<div class="gulir"><table class="tabel-data"><thead><tr><th>Pernyataan</th><th>Benar</th><th>Salah</th></tr></thead><tbody>' +
+      return '<div class="gulir"><table class="tabel-data"><thead><tr><th>Pernyataan</th>' + kolomBS(q.teks_soal).map(l => '<th>' + teks(l) + '</th>').join('') + '</tr></thead><tbody>' +
         daftar.map((h, i) => `<tr><td>${teks(q['opsi_' + h.toLowerCase()])}</td><td class="tengah">${buka && k[i] === 'B' ? '✓' : '○'}</td><td class="tengah">${buka && k[i] === 'S' ? '✓' : '○'}</td></tr>`).join('') + '</tbody></table></div>';
     }
     case 'ESSAY_TERSTRUKTUR':
@@ -2160,7 +2179,7 @@ function aturEditorSoal() {
   $('esGrupSpeaking').classList.toggle('sembunyi', t !== 'SPEAKING');
   $('esLabelOpsi').textContent = t === 'TABEL_BS' ? 'Pernyataan (satu per baris A–E)' : t === 'PG_1234' ? 'Pernyataan (1)–(4) pada A–D' : t === 'ESSAY_TERSTRUKTUR' ? 'Pertanyaan bagian a, b, c … pada A–E' : 'Pilihan jawaban (kosongkan yang tidak dipakai)';
   $('esPetunjukKunci').textContent = ({ PG_TUNGGAL: 'satu huruf, mis. B', SAB: 'satu huruf A–E', PG_KOMPLEKS: 'beberapa huruf, mis. A,C', TRUE_FALSE_NOT_GIVEN: 'True, False, atau Not Given',
-    ISIAN_SINGKAT: 'boleh beberapa bentuk dipisah |, mis. 11|sebelas', TABEL_BS: 'B/S sebanyak pernyataan, mis. B,S,S,B', PG_1234: 'A: 1,2,3 · B: 1,3 · C: 2,4 · D: 4 · E: semua' })[t] || '';
+    ISIAN_SINGKAT: 'boleh beberapa bentuk dipisah |, mis. 11|sebelas', TABEL_BS: 'B/S sebanyak pernyataan, mis. B,S,S,B (B = kolom 1, S = kolom 2; kolom selain Benar/Salah: tulis baris [KOLOM: Fakta | Opini] di teks soal)', PG_1234: 'A: 1,2,3 · B: 1,3 · C: 2,4 · D: 4 · E: semua' })[t] || '';
 }
 async function editorSoal(q) {
   if (!$('sUjian').value) return kabar('Pilih ujian dulu.');
@@ -2235,6 +2254,7 @@ function blokTeks(s) {
   const tp = () => { const t = para.join('\n').trim(); if (t) out.push({ t: 'p', teks: t }); para = []; };
   const tt = () => { if (tabel.length) out.push({ t: 'tabel', rows: tabel.map(r => { const c = r.trim().replace(/^\|/, '').split('|').map(x => x.trim()); if (c.length && c[c.length - 1] === '') c.pop(); return c; }).filter(r => !r.every(c => /^:?-{2,}:?$/.test(c))) }); tabel = []; };
   String(s || '').replace(/\r/g, '').split('\n').forEach(b => {
+    if (/^\s*\[KOLOM\s*:[^\]\n]*\]\s*$/i.test(b)) return;
     const m = b.match(/^\s*\[(GAMBAR|AUDIO)\s*:\s*(https:\/\/[^\s\]]+)\s*\]\s*$/i);
     if (m) { tp(); tt(); out.push({ t: m[1].toUpperCase() === 'AUDIO' ? 'audio' : 'gambar', url: m[2] }); return; }
     if (/^\s*\|/.test(b)) { tp(); tabel.push(b); } else { tt(); para.push(b); }
@@ -2268,7 +2288,7 @@ async function modelNaskah(versi, lapor) {
 }
 function teksKunci(q) {
   const k = String(q.kunci_jawaban || '');
-  if (q.tipe_soal === 'TABEL_BS') return k.split(',').map((x, i) => (i + 1) + ': ' + (x === 'B' ? 'Benar' : 'Salah')).join(' · ');
+  if (q.tipe_soal === 'TABEL_BS') { const kl = kolomBS(q.teks_soal); return k.split(',').map((x, i) => (i + 1) + ': ' + (x === 'B' ? kl[0] : kl[1])).join(' · '); }
   if (q.tipe_soal === 'ISIAN_SINGKAT') return k.split('|').join(' / ');
   if (['ESSAY', 'ESSAY_TERSTRUKTUR', 'STUDI_KASUS', 'SPEAKING'].indexOf(q.tipe_soal) >= 0) return '(dinilai guru — lihat rubrik)';
   return k;
@@ -2352,7 +2372,7 @@ async function unduhNaskahDocx(versi) {
       } else if (t === 'TRUE_FALSE_NOT_GIVEN') {
         isi.push(par([run('TRUE        FALSE        NOT GIVEN', { bold: true })], { indent: { left: 720 } }));
       } else if (t === 'TABEL_BS') {
-        isi.push(tabel([['Pernyataan', 'Benar', 'Salah']].concat(op.map(k => [q['opsi_' + k.toLowerCase()], '☐', '☐'])), true));
+        isi.push(tabel([['Pernyataan'].concat(kolomBS(q.teks_soal))].concat(op.map(k => [q['opsi_' + k.toLowerCase()], '☐', '☐'])), true));
       } else if (t === 'ISIAN_SINGKAT') {
         isi.push(par([run('Jawaban: ................................................')], { indent: { left: 720 } }));
       } else if (t === 'ESSAY_TERSTRUKTUR') {
@@ -2424,7 +2444,7 @@ async function unduhNaskahPdf(versi) {
         ['a', 'b', 'c', 'd'].forEach((k, j) => jawab.push({ text: '(' + (j + 1) + ') ' + (q['opsi_' + k] || '') }));
         jawab.push({ text: 'A. (1), (2), (3) benar   B. (1), (3) benar   C. (2), (4) benar   D. hanya (4)   E. semua benar', fontSize: 9.5, margin: [0, 2, 0, 0] });
       } else if (t === 'TRUE_FALSE_NOT_GIVEN') jawab.push({ text: 'TRUE        FALSE        NOT GIVEN', bold: true });
-      else if (t === 'TABEL_BS') jawab.push(tabel([['Pernyataan', 'Benar', 'Salah']].concat(op.map(k => [q['opsi_' + k.toLowerCase()], '(   )', '(   )'])), true));
+      else if (t === 'TABEL_BS') jawab.push(tabel([['Pernyataan'].concat(kolomBS(q.teks_soal))].concat(op.map(k => [q['opsi_' + k.toLowerCase()], '(   )', '(   )'])), true));
       else if (t === 'ISIAN_SINGKAT') jawab.push({ text: 'Jawaban: ........................................' });
       else if (t === 'ESSAY_TERSTRUKTUR') op.forEach((k, j) => { jawab.push({ text: String.fromCharCode(97 + j) + '. ' + q['opsi_' + k.toLowerCase()] }); if (versi === 'soal') jawab.push(garis(3)); });
       else if ((t === 'ESSAY' || t === 'STUDI_KASUS') && versi === 'soal') jawab.push(garis(8));
@@ -3440,4 +3460,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 323951 -->
+<!-- AKHIR BERKAS Guru · 325979 -->
