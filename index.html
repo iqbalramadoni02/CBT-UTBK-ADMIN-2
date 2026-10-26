@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- AWAL BERKAS Guru · CBT & Try Out SMAIT Al-Ittihad v5 · build v5-2026-10-22 · hapus semua isi lama, tempel SATU kali -->
+<!-- AWAL BERKAS Guru · CBT & Try Out SMAIT Al-Ittihad v5 · build v5-2026-10-28 · hapus semua isi lama, tempel SATU kali -->
 <html lang="id">
 <head>
 <meta charset="utf-8">
@@ -317,6 +317,16 @@ img.logo-bar{height:36px;width:auto;flex:none}
 .rm-frac .rm-atas{border-bottom:1.5px solid currentColor;padding:0 .25em .05em}.rm-frac .rm-bawah{padding:.05em .25em 0}
 .rm-akar{white-space:nowrap}.rm-akar .rm-akar-isi{border-top:1.5px solid currentColor;padding:0 .1em;margin-left:.04em}
 sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
+.bukti-speaking{display:block;max-width:100%;max-height:70vh;margin:8px 0;border:1px solid var(--garis);border-radius:8px;object-fit:contain;background:#fff}
+.bukti-speaking.sembunyi{display:none}
+.sehat-ringkas{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.sehat-ringkas span{padding:6px 12px;border-radius:8px;font-weight:700;font-size:13px}
+.sehat-tabel td{vertical-align:top;font-size:13px}.sehat-tabel td.saran{color:var(--tinta-2)}
+.audio-uji td{vertical-align:top;font-size:13px}
+.pilih-mode{display:grid;gap:6px;margin:4px 0 12px;padding:10px 12px;background:var(--kertas-2);border-radius:10px}
+.pilih-mode label{display:flex;gap:8px;align-items:baseline;font-size:14px;cursor:pointer}.pilih-mode input{width:auto}
+.penanda-audio{margin:-4px 0 12px;padding:10px 12px;border:1px dashed var(--garis);border-radius:10px}
+.tabel-penanda td{vertical-align:middle}.tabel-penanda input{margin:0}
 </style>
 <script>
 /* Pemeriksa keutuhan berkas: mendeteksi berkas yang tertempel dua kali / terpotong di editor Apps Script */
@@ -437,6 +447,7 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
                 <button type="button" class="tombol netral kecil" data-pola="3">TKA 3 subtes</button>
                 <button type="button" class="tombol netral kecil" data-pola="5">TKA 5 subtes</button>
                 <button type="button" class="tombol netral kecil" data-pola="7">7 subtes</button>
+                <button type="button" class="tombol netral kecil" data-pola="ielts">IELTS 4 skill</button>
                 <button type="button" class="tombol netral kecil" id="jSubtesTambah">+ Tambah subtes</button>
               </div>
               <div class="gulir"><table id="jSubtesTabel"><thead><tr><th>#</th><th>Nama subtes = kolom <b>Bagian</b> pada soal</th><th>Durasi (menit)</th><th></th></tr></thead><tbody></tbody></table></div>
@@ -504,9 +515,13 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
         <h3>🔊 Audio Listening — diputar otomatis</h3>
         <p class="ket">Audio diputar otomatis saat siswa membuka soal dalam rentangnya, dan terus berjalan saat siswa berpindah soal di rentang itu.
           Bagian berikutnya menunggu giliran lalu menyusul otomatis. Nomor soal mengikuti tabel soal di bawah (untuk Listening, matikan "Acak urutan soal").</p>
+        <div id="modeAudio"></div>
+        <div id="alurAudio" style="margin:6px 0 12px;padding:10px 12px;border:1px dashed var(--garis);border-radius:10px"></div>
         <div id="daftarAudio"></div>
-        <div class="aksi"><button class="tombol netral kecil" id="btnTambahAudio">+ Tambah audio</button><button class="tombol" id="btnSimpanAudio">Simpan pengaturan audio</button></div>
+        <div class="aksi"><button class="tombol netral kecil" id="btnTambahAudio">+ Tambah audio</button><button class="tombol" id="btnSimpanAudio">Simpan pengaturan audio</button>
+          <button class="tombol netral" id="btnPeriksaAudio" title="Memeriksa setiap audio: berkas ada & utuh, format, dapat diputar langsung atau lewat server, panjang rekaman">🔎 Periksa audio</button></div>
         <div class="pesan" id="audPesan"></div>
+        <div id="audPeriksa"></div>
       </div>
       <div class="kartu blok">
         <h3 id="sJudul">Soal</h3>
@@ -779,6 +794,18 @@ sup.rm-sup,sub.rm-sub{font-size:.72em;line-height:0}
         <div class="pesan" id="sfPesan"></div>
         <div class="aksi"><button class="tombol" id="btnSimpanSert">Simpan pengaturan</button><button class="tombol netral" id="btnContohSert">Lihat contoh sertifikat</button></div>
       </div>
+      <div class="kartu blok sembunyi" style="max-width:1100px" id="kartuSehat">
+        <h3>🩺 Kesehatan sistem — diagnosis &amp; perbaikan otomatis (admin)</h3>
+        <p class="ket">Memeriksa berkas portal, spreadsheet, pemicu server, folder Google Drive, setiap ujian aktif/mendatang (soal &amp; kunci, subtes, jendela waktu,
+          gambar, audio Listening), sesi siswa yang macet, serta galat (bug) yang dialami siswa, guru, dan server. <b>Periksa &amp; perbaiki</b> hanya memperbaiki hal yang
+          aman diperbaiki otomatis (tanpa menghapus data); selebihnya diberi saran langkah. Pemeriksaan &amp; perbaikan juga berjalan otomatis setiap jam dan saat <b>Siapkan server</b>.</p>
+        <div class="aksi"><button class="tombol netral" id="btnDiagnosa">🔎 Periksa sekarang</button><button class="tombol" id="btnPerbaiki">🛠 Periksa &amp; perbaiki otomatis</button></div>
+        <div id="sehatHasil"></div>
+        <h4 style="margin:18px 0 6px">Catatan galat (bug) otomatis</h4>
+        <p class="ket">Dikirim otomatis oleh portal siswa &amp; guru dan oleh server; galat yang sama digabung (kolom ×). Tandai selesai setelah ditangani — bila muncul lagi, statusnya berubah menjadi <b>Muncul lagi</b>.</p>
+        <div class="aksi"><button class="tombol netral kecil" id="btnLogMuat">↻ Muat ulang</button><button class="tombol netral kecil" id="btnLogTandai">✓ Tandai semua selesai</button><button class="tombol netral kecil" id="btnLogBersih">🗑 Hapus yang sudah selesai</button></div>
+        <div id="sehatLog"></div>
+      </div>
       <div class="kartu blok sembunyi" style="max-width:760px" id="kartuServer">
         <h3>Kesiapan server (admin)</h3>
         <p class="ket"><b>Kapasitas spreadsheet</b> — Google Sheets dibatasi 10 juta sel. Arsipkan ujian lama (tab Ujian &amp; Token → Arsip) bila mendekati 70%.</p>
@@ -828,7 +855,7 @@ let BOOT = {};
 try { BOOT = JSON.parse(document.getElementById('dataAwal').textContent); } catch (e) { BOOT = {}; }
 if (!BOOT.url) BOOT.url = URL_GAS;
 const DI_GAS = !!(window.google && google.script && google.script.run);
-const BUILD_HALAMAN = 'v5-2026-10-22';      // diperbarui otomatis saat paket dibuat; harus sama dengan BUILD di Code.gs
+const BUILD_HALAMAN = 'v5-2026-10-28';      // diperbarui otomatis saat paket dibuat; harus sama dengan BUILD di Code.gs
 /** Halaman yang dipasang di hosting luar: beri peringatan bila versinya tidak sama dengan server (Code.gs). */
 if (!DI_GAS) setTimeout(function () {
   fetch((typeof BOOT !== 'undefined' && BOOT.url) || URL_GAS, { method: 'POST', body: JSON.stringify({ action: 'ping' }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' })
@@ -1020,7 +1047,8 @@ $('tabelUjian').onclick = e => {
 const POLA_SUBTES = {
   3: [['Bahasa Indonesia', 30], ['Matematika', 40], ['Bahasa Inggris', 30]],
   5: [['Bahasa Indonesia', 30], ['Matematika', 40], ['Bahasa Inggris', 30], ['Mapel Pilihan 1', 30], ['Mapel Pilihan 2', 30]],
-  7: [['Subtes 1', 30], ['Subtes 2', 30], ['Subtes 3', 30], ['Subtes 4', 30], ['Subtes 5', 30], ['Subtes 6', 30], ['Subtes 7', 30]]
+  7: [['Subtes 1', 30], ['Subtes 2', 30], ['Subtes 3', 30], ['Subtes 4', 30], ['Subtes 5', 30], ['Subtes 6', 30], ['Subtes 7', 30]],
+  ielts: [['Listening', 40], ['Reading', 60], ['Writing', 60], ['Speaking', 20]]
 };
 function gambarSubtes(daftar) {
   $('jSubtesTabel').querySelector('tbody').innerHTML = daftar.map((t, i) => `<tr><td>${i + 1}</td>
@@ -1050,6 +1078,12 @@ $('jSubtesIsi').addEventListener('input', infoSubtes);
 $('jSubtesIsi').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const d = bacaSubtes();
+  if (b.dataset.pola === 'ielts') {
+    gambarSubtes(POLA_SUBTES.ielts.map(p => ({ nama: p[0], menit: p[1] })));
+    $('jKat').value = 'IELTS'; if ([...$('jSkema').options].some(o => o.value === 'IELTS')) $('jSkema').value = 'IELTS'; $('jKirimAwal').value = 'Ya';
+    kabar('Pola IELTS: Listening → Reading → Writing → Speaking. Kolom Bagian soal: "Listening …", "Reading …", "Writing Task 1/2", "Speaking …". Atur audio tiap Part di tab Soal (Alur Listening IELTS).');
+    return;
+  }
   if (b.dataset.pola) { gambarSubtes(POLA_SUBTES[b.dataset.pola].map(p => ({ nama: p[0], menit: p[1] }))); if ($('jKat').value !== 'TKA' && b.dataset.pola !== '7') $('jKat').value = 'TKA'; return; }
   if (b.id === 'jSubtesTambah') { if (d.length >= 10) return kabar('Maksimal 10 subtes.'); d.push({ nama: '', menit: 30 }); }
   if (b.dataset.sbhapus !== undefined) d.splice(Number(b.dataset.sbhapus), 1);
@@ -1089,12 +1123,17 @@ async function muatSoal() {
   if (!$('sUjian').value) return;
   const d = await api('cbtSoal', { op: 'daftar', exam_id: $('sUjian').value });
   SOAL = d.soal;
-  try { AUDIO_G = JSON.parse(d.ujian.audio_json || '[]'); } catch (e) { AUDIO_G = []; }
-  UJIAN_SOAL = d.ujian; gambarAudioGuru();
+  try { const v = JSON.parse(d.ujian.audio_json || '[]'); AUDIO_G = Array.isArray(v) ? v : (v.daftar || []); ALUR_G = Array.isArray(v) ? null : (v.alur || null); } catch (e) { AUDIO_G = []; ALUR_G = null; }
+  MODE_AUDIO = AUDIO_G.length === 1 && AUDIO_G[0].bagian && AUDIO_G[0].bagian.length ? 'satu' : 'part';
+  UJIAN_SOAL = d.ujian; gambarAudioGuru([]);
   $('sJudul').textContent = 'Soal: ' + d.ujian.judul_test + ' (' + SOAL.length + ')';
   const xs = UJIAN.find(u => u.exam_id === $('sUjian').value);
   if (xs && xs.subtes && xs.subtes.length) {
-    const sama = (a, b) => String(a || '').replace(/\s+/g, ' ').trim().toLowerCase() === String(b || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const nrm = a => String(a || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const subtesDari = b => { b = nrm(b); let j = xs.subtes.findIndex(t => nrm(t.nama) === b), p = -1;
+      if (j < 0) xs.subtes.forEach((t, k) => { const n = nrm(t.nama); if (n && b.indexOf(n) === 0 && /[\s\-–—:.(0-9]/.test(b.charAt(n.length)) && n.length > p) { p = n.length; j = k; } });
+      return j; };
+    const sama = (a, b) => { const j = subtesDari(a); return j >= 0 && nrm(xs.subtes[j].nama) === nrm(b); };
     const kosong = xs.subtes.filter(t => !SOAL.some(q => sama(q.section_module, t.nama))).map(t => t.nama);
     const lepas = [...new Set(SOAL.map(q => q.section_module || '(kosong)').filter(b => !xs.subtes.some(t => sama(b, t.nama))))];
     const per = xs.subtes.map(t => t.nama + ': ' + SOAL.filter(q => sama(q.section_module, t.nama)).length + ' soal').join(' · ');
@@ -1463,7 +1502,7 @@ function sumberMedia(u) {
   u = String(u || '').trim();
   const id = idDrive(u);
   if (!id) return [u.split('#')[0]];
-  if (/#gambar-privat/.test(u)) return ['data:,'];                 // berkas tidak boleh dibagikan publik → jalur server
+  if (/#(gambar|audio)-privat/.test(u)) return ['data:,'];         // berkas tidak boleh dibagikan publik → jalur server
   return jenisMedia(u) === 'audio'
     ? ['https://drive.google.com/uc?export=download&id=' + id, 'https://docs.google.com/uc?export=open&id=' + id, 'https://drive.usercontent.google.com/download?id=' + id + '&export=download']
     : ['https://lh3.googleusercontent.com/d/' + id, 'https://drive.google.com/uc?export=view&id=' + id, 'https://drive.google.com/thumbnail?id=' + id + '&sz=w2000'];
@@ -1481,15 +1520,24 @@ function htmlMedia(u) {
   if (!u) return '';
   const src = sumberMedia(u), cad = teks(JSON.stringify(src.slice(1)));
   if (jenisMedia(u) === 'audio')
-    return `<div class="cbt-media"><audio controls controlsList="nodownload" preload="metadata" src="${teks(src[0])}" data-cadangan="${cad}" onerror="mediaCadangan(this)"></audio></div>`;
+    return `<div class="cbt-media"><audio controls controlsList="nodownload" preload="metadata" src="${teks(src[0])}" data-mid="${teks(idDrive(u))}" data-cadangan="${cad}" onerror="mediaCadangan(this)"></audio></div>`;
   return `<div class="cbt-media"><img src="${teks(src[0])}" alt="Gambar soal" loading="lazy" referrerpolicy="no-referrer" data-mid="${teks(idDrive(u))}" data-cadangan="${cad}" onerror="mediaCadangan(this)"></div>`;
 }
 /* Cadangan terakhir: gambar dibaca server dari Google Drive (bila tautan Drive tidak dapat dibuka di perangkat ini) */
 const MEDIA_PROKSI = {};
 function mediaLewatServer(el) {
   const id = el.getAttribute('data-mid');
-  if (!id || el.tagName !== 'IMG' || el.getAttribute('data-proksi')) return false;
+  if (!id || (el.tagName !== 'IMG' && el.tagName !== 'AUDIO') || el.getAttribute('data-proksi')) return false;
   el.setAttribute('data-proksi', '1');
+  if (el.tagName === 'AUDIO') {                                     // audio di dalam soal: unduh lewat server → putar dari memori
+    const dasar = {};
+    if (!dasar) return false;
+    MEDIA_PROKSI['a' + id] = MEDIA_PROKSI['a' + id] || unduhAudioServer(id, dasar);
+    MEDIA_PROKSI['a' + id].then(src => { el.src = src; const g = el.parentNode && el.parentNode.querySelector('.media-gagal'); if (g) g.remove(); })
+      .catch(e => { delete MEDIA_PROKSI['a' + id]; el.removeAttribute('data-proksi'); try { laporGalat('audio', 'Audio soal gagal dimuat lewat server: ' + e.message, 'mediaLewatServer'); } catch (x) { }
+        const p = el.parentNode; if (p && !p.querySelector('.media-gagal')) p.insertAdjacentHTML('beforeend', '<div class="media-gagal">Audio belum dapat dimuat. Periksa koneksi lalu ketuk Muat ulang.</div>'); });
+    return true;
+  }
   const req = { id: id };
   MEDIA_PROKSI[id] = MEDIA_PROKSI[id] || api('mediaSoal', req, { coba: 4, diam: true }).then(d => 'data:' + d.mime + ';base64,' + d.data);
   MEDIA_PROKSI[id].then(src => { el.src = src; const g = el.parentNode && el.parentNode.querySelector('.media-gagal'); if (g) g.remove(); })
@@ -1548,6 +1596,8 @@ function renderTeks(s) {
   const tutupTabel = () => { if (tabel.length) html += tabelHTML(tabel); tabel = []; };
   baris.forEach(b => {
     if (/^\s*\[KOLOM\s*:[^\]\n]*\]\s*$/i.test(b)) return;                 // label kolom tabel B/S, bukan teks
+    const ml = b.match(/^\s*\[TES LUAR\s*:\s*(https:\/\/[^\s\]]+)\s*\]\s*$/i);
+    if (ml) { tutupPara(); tutupTabel(); html += '<div class="para">🔗 Tes Speaking di website: <a href="' + teks(ml[1]) + '" target="_blank" rel="noopener">' + teks(ml[1]) + '</a></div>'; return; }
     // gambar/audio di dalam teks: baris "[GAMBAR: https://…]" atau "[AUDIO: https://…]"
     const m = b.match(/^\s*\[(GAMBAR|AUDIO)\s*:\s*(https:\/\/[^\s\]]+)\s*\]\s*$/i);
     if (m) { tutupPara(); tutupTabel(); html += htmlMedia(m[2].replace(/#(audio|gambar)$/, '') + (m[1].toUpperCase() === 'AUDIO' ? '#audio' : '#gambar')); return; }
@@ -1900,6 +1950,96 @@ async function cetakSertifikat(daftarR, judul, ttd) {
   return ada.length;
 }
 /* <</RAPOR>> */
+/* <<PENJAGA>> */
+/* =====================================================================
+   PENJAGA — pencatat galat otomatis & pemulihan mandiri (portal siswa dan portal guru).
+   · Setiap galat kode di peramban (bug) dikirim diam-diam ke server → admin melihatnya di Akun → Kesehatan sistem
+     lengkap dengan jumlah kejadian dan jenis perangkat; galat yang sama hanya dikirim sekali per halaman.
+   · Data tersimpan di perangkat yang rusak dibersihkan otomatis saat halaman dibuka (server tetap memegang salinannya).
+   · Bila tampilan soal terganggu oleh galat, tampilan digambar ulang otomatis (jawaban tidak hilang).
+   ===================================================================== */
+const PENJAGA = { antre: [], terkirim: {}, n: 0, h: 0, tPulih: 0, nPulih: 0 };
+function portalPenjaga() { return typeof TOKEN !== 'undefined' ? 'guru' : 'siswa'; }
+function laporGalat(jenis, pesan, lokasi, info) {
+  try {
+    pesan = String(pesan || '').replace(/\s+/g, ' ').trim().slice(0, 400);
+    lokasi = String(lokasi || '').trim().slice(0, 200);
+    if (!pesan) return;
+    // derau yang bukan galat aplikasi: ekstensi peramban, skrip lintas-domain tanpa rincian, ResizeObserver
+    if (/ResizeObserver loop|^Script error\.?$|chrome-extension:|moz-extension:|safari-(web-)?extension:|webkit-masked-url|__gCrWeb|instantSearchSDK/i.test(pesan + ' ' + lokasi)) return;
+    const k = jenis + '|' + pesan + '|' + lokasi;
+    if (PENJAGA.terkirim[k] || PENJAGA.n >= 25) return;
+    PENJAGA.terkirim[k] = 1; PENJAGA.n++;
+    PENJAGA.antre.push({ jenis: String(jenis || 'Error').slice(0, 40), pesan: pesan, lokasi: lokasi, info: String(info || '').slice(0, 200) });
+    clearTimeout(PENJAGA.h); PENJAGA.h = setTimeout(kirimLaporanGalat, 2500);
+  } catch (e) { }
+}
+function kirimLaporanGalat() {
+  if (!PENJAGA.antre.length) return;
+  const g = PENJAGA.antre.splice(0, 10);
+  const sesi = typeof cb !== 'undefined' && cb && cb.sesi ? cb.sesi : '';
+  try {
+    const p = api('logKlien', { sumber: portalPenjaga(), sesiId: sesi, build: typeof BUILD_HALAMAN !== 'undefined' ? BUILD_HALAMAN : '', ua: navigator.userAgent, galat: g }, { coba: 2, diam: true });
+    if (p && p.catch) p.catch(() => { });
+  } catch (e) { }
+  if (PENJAGA.antre.length) PENJAGA.h = setTimeout(kirimLaporanGalat, 3000);
+}
+function fungsiGalat(er) {
+  const baris = String(er && er.stack || '').split('\n').map(s => s.trim()).filter(s => /^at |@/.test(s))[0] || '';
+  const m = baris.match(/^at\s+([\w$.<>]+)/) || baris.match(/^([\w$.<>]+)@/);
+  return m ? m[1] : '';
+}
+function layarPenjaga() {
+  const el = [...document.querySelectorAll('[id^=layar]')].find(e => !e.classList.contains('sembunyi') && e.offsetParent !== null);
+  return el ? el.id : '';
+}
+/** Galat saat ujian berjalan → tampilan soal digambar ulang (maks. 3× per halaman, jeda ≥ 5 detik). */
+function pulihkanTampilan() {
+  if (portalPenjaga() !== 'siswa' || PENJAGA.nPulih >= 3 || Date.now() - PENJAGA.tPulih < 5000) return;
+  if (typeof cb === 'undefined' || !cb || !cb.sesi || cb.kirim || typeof gambarCbt !== 'function') return;
+  const l = document.getElementById('layarCbt');
+  if (!l || l.classList.contains('sembunyi')) return;
+  PENJAGA.tPulih = Date.now(); PENJAGA.nPulih++;
+  setTimeout(() => { try { gambarCbt(); } catch (e) { } }, 300);
+}
+function galatKode(er) {
+  const nama = String(er && er.name || ''), pesan = String(er && er.message || er || '');
+  return ['TypeError', 'ReferenceError', 'RangeError', 'SyntaxError', 'URIError'].indexOf(nama) >= 0 ||
+    /is not a function|Cannot read prop|Cannot set prop|of undefined|of null|is not defined|undefined is not|is not iterable|Maximum call stack/i.test(pesan);
+}
+window.addEventListener('error', function (e) {
+  if (!e || (e.target && e.target !== window)) return;                     // gambar/audio gagal dimuat ditangani jalur cadangan masing-masing
+  const er = e.error;
+  laporGalat(er && er.name || 'Error', e.message || (er && er.message), [fungsiGalat(er), e.lineno ? 'baris ' + e.lineno + ':' + (e.colno || 0) : ''].filter(Boolean).join(' · '), layarPenjaga());
+  pulihkanTampilan();
+});
+window.addEventListener('unhandledrejection', function (e) {
+  const r = e && e.reason;
+  if (!r || !galatKode(r)) return;                                         // pesan biasa dari server (validasi, jaringan) bukan bug
+  laporGalat(r.name || 'Promise', r.message || String(r), fungsiGalat(r), layarPenjaga());
+  pulihkanTampilan();
+});
+/** Data tersimpan di perangkat yang rusak (JSON tidak utuh, mis. baterai habis saat menyimpan) dibersihkan sebelum dipakai. */
+(function bersihkanPenyimpanan() {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!/^(cbt_|kunci|kertas_|to_|tka_)/.test(k || '')) continue;
+      const v = localStorage.getItem(k);
+      if (!v || !/^\s*[[{"]/.test(v)) continue;
+      try { JSON.parse(v); }
+      catch (e) { localStorage.removeItem(k); laporGalat('pemulihan', 'Data tersimpan di perangkat rusak, dibersihkan otomatis', k.replace(/[\w-]{12,}/g, '…')); }
+    }
+  } catch (e) { }
+})();
+/** Audio di dalam soal yang tidak dapat dibuka langsung dari Google Drive → diunduh lewat server per potongan 1 MB → diputar dari memori. */
+async function unduhAudioServer(id, dasar) {
+  const ambil = i => api('mediaAudio', Object.assign({ id: id, i: i }, dasar || {}), { coba: 6, diam: true });
+  const d0 = await ambil(0), bagian = [d0.data];
+  for (let i = 1; i < d0.k; i++) bagian.push((await ambil(i)).data);
+  return URL.createObjectURL(new Blob(bagian.map(b => Uint8Array.from(atob(b), c => c.charCodeAt(0))), { type: d0.mime || 'audio/mpeg' }));
+}
+/* <</PENJAGA>> */
 /* ---------- media per soal (tombol di tabel soal) ---------- */
 async function bukaMediaSoal(qid) {
   const q = SOAL.find(x => x.question_id === qid); if (!q) return;
@@ -2082,7 +2222,7 @@ document.addEventListener('keydown', e => {
    PORTAL GURU — TAMBAHAN v5.1
    kelas · ujian per kelas · editor soal · audio Listening · naskah DOCX/PDF · rapor · rekap Writing · Speaking · analisis soal
    ===================================================================== */
-let KELAS = [], AUDIO_G = [], UJIAN_SOAL = null;
+let KELAS = [], AUDIO_G = [], ALUR_G = null, UJIAN_SOAL = null, MODE_AUDIO = 'part';
 const TIPE_LABEL = { PG_TUNGGAL: 'Pilihan ganda', PG_KOMPLEKS: 'Pilihan ganda kompleks (lebih dari satu benar)', TRUE_FALSE_NOT_GIVEN: 'True / False / Not Given',
   ISIAN_SINGKAT: 'Isian singkat', TABEL_BS: 'Tabel benar/salah', SAB: 'Sebab–akibat', PG_1234: 'Pilihan ganda (1)–(4)', ESSAY: 'Esai / Writing',
   ESSAY_TERSTRUKTUR: 'Uraian terstruktur (a, b, c)', STUDI_KASUS: 'Studi kasus', SPEAKING: 'Speaking (siswa merekam suara)' };
@@ -2285,7 +2425,12 @@ async function kartuPeserta(x) {
 }
 
 /* =========================== SOAL: editor & urutan =========================== */
+/** Baris "[TES LUAR: https://…]" di teks soal SPEAKING = tes Speaking dikerjakan di website lain. */
+const POLA_LUAR = /^[ \t]*\[TES LUAR[ \t]*:[ \t]*([^\]\s]*)[ \t]*\][ \t]*$/im;
+function tautanLuarSoal(s) { const m = String(s || '').match(POLA_LUAR); return m ? m[1] : ''; }
+function tanpaTautanLuar(s) { return String(s || '').replace(new RegExp(POLA_LUAR.source, 'gim'), '').replace(/\n{3,}/g, '\n\n').trim(); }
 function htmlEditorSoal(q) {
+  q = Object.assign({}, q, { _luar: tautanLuarSoal(q.teks_soal), teks_soal: tanpaTautanLuar(q.teks_soal) });
   const v = k => teks(q[k] === undefined || q[k] === null ? '' : q[k]);
   return `<div class="grid-form">
     <div><label>Tipe soal</label><select id="esTipe">${Object.keys(TIPE_LABEL).map(t => `<option value="${t}" ${q.tipe_soal === t ? 'selected' : ''}>${teks(TIPE_LABEL[t])}</option>`).join('')}</select></div>
@@ -2299,7 +2444,9 @@ function htmlEditorSoal(q) {
     <div id="esGrupKunci"><label>Kunci jawaban <span class="ket" id="esPetunjukKunci"></span></label><input type="text" id="esKunci" value="${v('kunci_jawaban')}"></div>
     <div id="esGrupSpeaking" class="grid-form"><div><label>Waktu persiapan (detik)</label><input type="number" id="esPersiapan" min="0" max="300" value="${v('persiapan_detik') || 0}"></div>
       <div><label>Durasi rekaman maks. (detik)</label><input type="number" id="esDurasi" min="10" max="600" value="${v('durasi_detik') || 120}"></div>
-      <div><label>Boleh rekam ulang</label><select id="esUlang"><option ${q.rekam_ulang !== 'Ya' ? 'selected' : ''}>Tidak</option><option ${q.rekam_ulang === 'Ya' ? 'selected' : ''}>Ya</option></select></div></div>
+      <div><label>Boleh rekam ulang</label><select id="esUlang"><option ${q.rekam_ulang !== 'Ya' ? 'selected' : ''}>Tidak</option><option ${q.rekam_ulang === 'Ya' ? 'selected' : ''}>Ya</option></select></div>
+      <div style="grid-column:1/-1"><label>Tautan tes Speaking di website lain (opsional)</label><input type="text" id="esLuar" value="${v('_luar')}" placeholder="https://… (kosongkan bila siswa merekam langsung di CBT)">
+        <p class="ket" style="margin:4px 0 0">Bila diisi: siswa mengerjakan Speaking di website tersebut, lalu mengisi nilai yang diperoleh dan mengunggah screenshot hasilnya. Waktu persiapan/durasi di atas tidak dipakai. Meninggalkan halaman ujian saat soal ini terbuka tidak dihitung pelanggaran.</p></div></div>
     <label>Gambar/audio soal (tautan https; atau atur lewat tombol Media setelah disimpan)</label><input type="text" id="esMedia" value="${v('media_url')}">
     <label>Pembahasan / rubrik penilaian</label><textarea id="esPembahasan" rows="3">${v('pembahasan')}</textarea>`;
 }
@@ -2323,6 +2470,11 @@ async function editorSoal(q) {
       const soal = { question_id: baru ? '' : q.question_id, tipe_soal: $('esTipe').value, section_module: $('esBagian').value, bobot_nilai: $('esBobot').value, tingkat: $('esTingkat').value,
         stimulus_text: $('esStimulus').value, teks_soal: $('esSoal').value, kunci_jawaban: $('esKunci').value, media_url: $('esMedia').value, pembahasan: $('esPembahasan').value,
         persiapan_detik: $('esPersiapan').value, durasi_detik: $('esDurasi').value, rekam_ulang: $('esUlang').value };
+      const luar = $('esLuar').value.trim();
+      if (luar && soal.tipe_soal === 'SPEAKING') {
+        if (!/^https:\/\/\S+$/i.test(luar)) throw new Error('Tautan tes Speaking harus diawali https://');
+        soal.teks_soal = (soal.teks_soal.trim() ? soal.teks_soal.trim() + '\n' : '') + '[TES LUAR: ' + luar + ']';
+      }
       ['a', 'b', 'c', 'd', 'e'].forEach(k => soal['opsi_' + k] = $('esOpsi' + k).value);
       const d = await api('cbtSoal', { op: 'simpanSatu', exam_id: $('sUjian').value, soal: soal }, { coba: 2 });
       kabar(d.pesan); await muatSoal(); muatUjian();
@@ -2336,8 +2488,115 @@ async function geserSoal(i, arah) {
 }
 
 /* =========================== AUDIO LISTENING per rentang soal =========================== */
-function gambarAudioGuru() {
-  const n = SOAL.length;
+/** Soal Listening: nomor (1-based) soal yang kolom Bagian-nya diawali "Listening". */
+function soalListening() { return SOAL.map((q, i) => [q, i + 1]).filter(x => /^\s*listening/i.test(x[0].section_module || '')); }
+function gambarAlurGuru() {
+  const el = $('alurAudio'); if (!el) return;
+  const a = ALUR_G || {}, aktif = !!(ALUR_G && ALUR_G.aktif);
+  el.innerHTML = `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="alAktif" style="width:auto" ${aktif ? 'checked' : ''}>
+      <b>Alur Listening IELTS (computer-delivered)</b> <span class="ket">— berjalan sendiri tanpa tombol: waktu membaca → Part diputar sekali → waktu memeriksa → Part berikutnya → kaji ulang → Listening berakhir</span></label>
+    <div id="alIsi" class="${aktif ? '' : 'sembunyi'}">
+      <div class="grid-form" style="margin-top:6px">
+        <div><label title="IELTS: 30–60 detik">Waktu membaca soal sebelum tiap Part (detik)</label><input type="number" id="alBaca" min="0" max="120" value="${a.baca !== undefined ? a.baca : 30}"></div>
+        <div><label title="IELTS: ±30 detik">Waktu memeriksa jawaban setelah tiap Part (detik)</label><input type="number" id="alCek" min="0" max="120" value="${a.cek !== undefined ? a.cek : 30}"></div>
+        <div><label title="Computer-delivered: 2 menit. Paper-based: 10 menit (transfer jawaban)">Kaji ulang semua jawaban di akhir (detik)</label><input type="number" id="alAkhir" min="0" max="600" value="${a.akhir !== undefined ? a.akhir : 120}"></div>
+      </div>
+      <div class="aksi" style="margin:6px 0"><button type="button" class="tombol netral kecil" id="alEmpat">Isi 4 Part IELTS otomatis</button>
+        <button type="button" class="tombol netral kecil" data-alpreset="kom">Komputer: 30 · 30 · 120 dtk</button><button type="button" class="tombol netral kecil" data-alpreset="kertas">Kertas: 30 · 30 · 600 dtk</button>
+        <button type="button" class="tombol netral kecil" data-alpreset="resmi">Rekaman resmi (jeda sudah di dalam audio): 0 · 0 · 120</button></div>
+      <p class="ket" id="alInfo"></p>
+    </div>`;
+  infoAlurGuru();
+}
+function bacaAlurGuru() {
+  if (!$('alAktif') || !$('alAktif').checked) return null;
+  return { aktif: true, baca: Number($('alBaca').value) || 0, cek: Number($('alCek').value) || 0, akhir: Number($('alAkhir').value) || 0 };
+}
+function infoAlurGuru() {
+  const al = bacaAlurGuru(); if (!$('alInfo')) return;
+  if (!al) { $('alInfo').textContent = ''; return; }
+  if (MODE_AUDIO === 'satu') {
+    const tambah1 = Math.ceil((al.baca + al.cek + al.akhir) / 60);
+    $('alInfo').innerHTML = `<b>Satu rekaman:</b> waktu membaca ${al.baca} dtk sebelum rekaman dimulai → rekaman diputar <b>sekali</b> dari awal sampai akhir (siswa otomatis pindah ke soal Part berikutnya di setiap penanda) →
+      memeriksa ${al.cek} dtk → kaji ulang ${al.akhir} dtk → Listening berakhir. Bila rekaman sudah berisi jeda membaca/memeriksa bawaan (rekaman resmi IELTS), pilih <b>Rekaman resmi: 0 · 0 · 120</b>.
+      Durasi subtes Listening yang disarankan: <b>panjang rekaman + ${tambah1} menit</b> + 1 menit cadangan (lihat 🔎 Periksa audio).`;
+    return;
+  }
+  const n = Math.max(1, bacaFormAudio().length || 4), tambah = Math.ceil((n * (al.baca + al.cek) + al.akhir) / 60);
+  $('alInfo').innerHTML = `Durasi subtes Listening yang disarankan: <b>total panjang rekaman + ${tambah} menit</b> (${n} Part × (${al.baca} + ${al.cek}) detik + ${al.akhir} detik), ditambah 1–2 menit cadangan — mis. rekaman 30 menit → <b>${30 + tambah + 1} menit</b>.
+    Saat alur selesai, subtes Listening berakhir otomatis dan siswa masuk ke subtes berikutnya (Reading). Setiap Part diputar <b>sekali</b>, tanpa jeda dan tanpa ulang.
+    Kolom Bagian soal boleh "Listening" atau "Listening Part 1" … "Listening Part 4" (tetap masuk subtes Listening).`;
+}
+function isiEmpatPart() {
+  const L = soalListening(), lama = bacaFormAudio().map(a => Object.assign({}, a, { berkas: undefined }));
+  const judul = ['Part 1 — Social conversation', 'Part 2 — Social monologue', 'Part 3 — Academic discussion', 'Part 4 — Academic lecture'];
+  let grup = [];
+  if (L.length) {
+    const nama = [...new Set(L.map(x => String(x[0].section_module).trim()))];
+    if (nama.length >= 2 && nama.length <= 6) grup = nama.map(b => { const no = L.filter(x => String(x[0].section_module).trim() === b).map(x => x[1]); return [Math.min.apply(null, no), Math.max.apply(null, no)]; });
+    else { const a = L[0][1], z = L[L.length - 1][1], per = Math.ceil((z - a + 1) / 4); for (let k = 0; k < 4; k++) { const d = a + k * per; if (d <= z) grup.push([d, Math.min(z, d + per - 1)]); } }
+  } else { const z = Math.min(40, SOAL.length || 40); for (let k = 0; k < 4; k++) grup.push([k * 10 + 1, Math.min(z, k * 10 + 10)]); }
+  if (MODE_AUDIO === 'satu') {
+    const a0 = lama[0] || {}, bl = a0.bagian || [];
+    AUDIO_G = [{ judul: a0.judul || 'Listening (semua Part)', dari: grup[0][0], sampai: grup[grup.length - 1][1], url: a0.url || '', sekali: true,
+      bagian: grup.map((g, k) => ({ judul: judul[k] || ('Part ' + (k + 1)), dari: g[0], sampai: g[1], mulai: bl[k] && isFinite(bl[k].mulai) ? bl[k].mulai : (k === 0 ? 0 : '') })) }];
+    ALUR_G = Object.assign({ baca: 0, cek: 0, akhir: 120 }, bacaAlurGuru() || {}, { aktif: true });
+    gambarAudioGuru();
+    return pesan('audPesan', '4 penanda Part terisi (soal ' + grup.map(g => g[0] + '–' + g[1]).join(', ') + '). Putar rekaman, lalu tekan ⏱ di setiap Part saat Part itu dimulai, kemudian Simpan pengaturan audio.', 'info');
+  }
+  AUDIO_G = grup.map((g, k) => ({ judul: (lama[k] && lama[k].judul && !/^Part \d+$/.test(lama[k].judul) ? lama[k].judul : judul[k] || ('Part ' + (k + 1))), dari: g[0], sampai: g[1], url: lama[k] ? lama[k].url : '', sekali: true }));
+  ALUR_G = Object.assign({ baca: 30, cek: 30, akhir: 120 }, bacaAlurGuru() || {}, { aktif: true });
+  gambarAudioGuru();
+  pesan('audPesan', 'Rentang 4 Part terisi (' + grup.map(g => g[0] + '–' + g[1]).join(', ') + '). Unggah audio tiap Part, lalu tekan Simpan pengaturan audio.', 'info');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest || !e.target.closest('#alurAudio')) return;
+  const b = e.target.closest('button');
+  if (b && b.id === 'alEmpat') return isiEmpatPart();
+  if (b && b.dataset.alpreset) { const v = { kom: [30, 30, 120], kertas: [30, 30, 600], resmi: [0, 0, 120] }[b.dataset.alpreset]; $('alBaca').value = v[0]; $('alCek').value = v[1]; $('alAkhir').value = v[2]; infoAlurGuru(); }
+});
+document.addEventListener('change', e => { if (e.target && e.target.id === 'alAktif') { $('alIsi').classList.toggle('sembunyi', !e.target.checked); infoAlurGuru(); } });
+document.addEventListener('input', e => { if (e.target && /^al(Baca|Cek|Akhir)$/.test(e.target.id || '')) infoAlurGuru(); });
+/** "7:30" · "07:30" · "1:02:03" · "450" → detik (NaN bila tidak sah). */
+function detikDari(t) {
+  t = String(t === undefined || t === null ? '' : t).trim().replace(',', '.');
+  if (!t) return NaN;
+  if (/^\d+(\.\d+)?$/.test(t)) return Number(t);
+  const m = t.match(/^(?:(\d+):)?(\d{1,3}):(\d{1,2}(?:\.\d+)?)$/);
+  if (!m || Number(m[3]) >= 60) return NaN;
+  return (Number(m[1] || 0) * 3600) + Number(m[2]) * 60 + Number(m[3]);
+}
+function teksWaktu(v) { return v === '' || v === undefined || v === null || !isFinite(v) ? '' : mmssG(v); }
+function htmlPenanda(a) {
+  const n = SOAL.length, bg = a.bagian || [];
+  return `<div class="penanda-audio"><h4 style="margin:10px 0 4px">⏱ Penanda Part di dalam rekaman</h4>
+    <p class="ket" style="margin:0 0 6px">Isi waktu mulai setiap Part di dalam rekaman (menit:detik). Putar rekaman di atas, lalu tekan <b>⏱ dari pemutar</b> tepat saat Part itu dimulai.
+      Saat ujian, siswa otomatis dipindah ke soal pertama Part tersebut dan bilah audio menampilkan Part yang sedang berjalan. Penanda boleh dikosongkan (rekaman diputar utuh tanpa perpindahan otomatis).</p>
+    <div class="gulir"><table class="tabel-penanda"><thead><tr><th>Part</th><th>Soal dari</th><th>sampai</th><th>Mulai di rekaman</th><th></th></tr></thead><tbody>
+    ${bg.map((b, j) => `<tr class="baris-penanda" data-j="${j}"><td><input type="text" class="p-judul" maxlength="60" value="${teks(b.judul || ('Part ' + (j + 1)))}"></td>
+      <td><input type="number" class="p-dari" min="1" max="${n}" value="${b.dari || ''}" style="max-width:90px"></td><td><input type="number" class="p-sampai" min="1" max="${n}" value="${b.sampai || ''}" style="max-width:90px"></td>
+      <td style="white-space:nowrap"><input type="text" class="p-mulai" placeholder="mm:ss" value="${teks(typeof b.mulai === 'number' ? teksWaktu(b.mulai) : (b.mulai || ''))}" style="max-width:90px">
+        <button type="button" class="tombol netral kecil p-ambil" title="Isi dengan posisi pemutar rekaman saat ini">⏱ dari pemutar</button></td>
+      <td><button type="button" class="tombol bahaya kecil p-hapus">Hapus</button></td></tr>`).join('') || '<tr><td colspan="5" class="ket">Belum ada penanda. Tekan <b>+ Tambah penanda Part</b> atau <b>Isi 4 Part IELTS otomatis</b> (Alur Listening).</td></tr>'}
+    </tbody></table></div>
+    <div class="aksi"><button type="button" class="tombol netral kecil" id="btnTambahPenanda">+ Tambah penanda Part</button></div></div>`;
+}
+function bacaPenanda() {
+  return Array.from(document.querySelectorAll('#daftarAudio .baris-penanda')).map(tr => ({
+    judul: tr.querySelector('.p-judul').value.trim(), dari: Number(tr.querySelector('.p-dari').value), sampai: Number(tr.querySelector('.p-sampai').value),
+    mulaiTeks: tr.querySelector('.p-mulai').value.trim(), mulai: detikDari(tr.querySelector('.p-mulai').value) }));
+}
+/** Berkas yang sudah dipilih tetapi belum diunggah (dipertahankan saat kartu digambar ulang). */
+function berkasTerpilih() { return Array.from(document.querySelectorAll('#daftarAudio .baris-audio')).map(el => el.querySelector('.a-berkas').files[0] || null); }
+function gambarAudioGuru(berkas) {
+  const tunda = berkas || berkasTerpilih();
+  gambarAlurGuru();
+  const n = SOAL.length, satu = MODE_AUDIO === 'satu';
+  if ($('modeAudio')) $('modeAudio').innerHTML = `<div class="pilih-mode">
+      <label><input type="radio" name="modeAudio" value="part" ${satu ? '' : 'checked'}> <b>Audio per Part</b> <span class="ket">— satu berkas untuk setiap Part (Part 1, Part 2, …)</span></label>
+      <label><input type="radio" name="modeAudio" value="satu" ${satu ? 'checked' : ''}> <b>Satu audio untuk semua Part</b> <span class="ket">— satu rekaman utuh (mis. Listening lengkap ±30 menit) + penanda waktu mulai tiap Part</span></label></div>`;
+  if (satu) AUDIO_G = AUDIO_G.slice(0, 1);
+  if ($('btnTambahAudio')) $('btnTambahAudio').classList.toggle('sembunyi', satu && AUDIO_G.length >= 1);
   $('daftarAudio').innerHTML = AUDIO_G.map((a, i) => `<div class="baris-audio" data-i="${i}">
     <div><label>Judul</label><input type="text" class="a-judul" value="${teks(a.judul || ('Part ' + (i + 1)))}" maxlength="60"></div>
     <div><label>Soal dari</label><input type="number" class="a-dari" min="1" max="${n}" value="${a.dari || ''}"></div>
@@ -2345,15 +2604,59 @@ function gambarAudioGuru() {
     <div><label>Audio: unggah MP3/M4A (maks. 15 MB) atau tempel tautan https</label>
       <input type="file" class="a-berkas" accept="audio/*,.mp3,.m4a,.wav,.ogg" style="margin-bottom:6px">
       <input type="text" class="a-url" placeholder="https://…" value="${teks(String(a.url || '').replace(/#audio$/, ''))}">
-      ${a.url ? htmlMedia(a.url) : ''}</div>
+      ${a.url ? htmlMedia(String(a.url).replace(/#.*$/, '') + '#audio') : ''}</div>
     <label class="sekali" title="Seperti tes asli: tanpa jeda, tanpa ulang"><input type="checkbox" class="a-sekali" style="width:auto" ${a.sekali !== false ? 'checked' : ''}> Putar sekali</label>
-    <button class="tombol bahaya kecil a-hapus" style="margin-bottom:8px">Hapus</button></div>`).join('') ||
-    '<p class="ket">Belum ada audio Listening. Tekan <b>+ Tambah audio</b>, misalnya "Part 1" untuk soal 1–10.</p>';
+    <button class="tombol bahaya kecil a-hapus" style="margin-bottom:8px">Hapus</button></div>${satu ? htmlPenanda(a) : ''}`).join('') ||
+    (satu ? '' : '<p class="ket">Belum ada audio Listening. Tekan <b>+ Tambah audio</b>, misalnya "Part 1" untuk soal 1–10.</p>');
+  if (satu && !AUDIO_G.length) { AUDIO_G = [audioSatuBaru()]; return gambarAudioGuru(tunda); }
+  tunda.forEach((f, i) => {                                       // pasang kembali berkas pilihan guru + pratinjaunya
+    const inp = f && document.querySelector('#daftarAudio .baris-audio[data-i="' + i + '"] .a-berkas');
+    if (!inp) return;
+    try { const dt = new DataTransfer(); dt.items.add(f); inp.files = dt.files; inp.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) { }
+  });
 }
+/** Rentang semua soal Listening (atau semua soal) untuk satu rekaman. */
+function audioSatuBaru() {
+  const L = soalListening();
+  return { judul: 'Listening (semua Part)', dari: L.length ? L[0][1] : 1, sampai: L.length ? L[L.length - 1][1] : Math.max(1, SOAL.length), url: '', sekali: true, bagian: [] };
+}
+function gantiModeAudio(mode) {
+  const f = bacaFormAudio().map(a => Object.assign({}, a, { berkas: undefined }));
+  if (mode === 'satu') {
+    const adaUrl = f.filter(a => a.url);
+    const dasar = audioSatuBaru();
+    AUDIO_G = [{ judul: 'Listening (semua Part)', dari: f.length ? Math.min.apply(null, f.map(a => a.dari || dasar.dari)) : dasar.dari,
+      sampai: f.length ? Math.max.apply(null, f.map(a => a.sampai || dasar.sampai)) : dasar.sampai, url: adaUrl.length === 1 ? adaUrl[0].url : '', sekali: true,
+      bagian: f.length > 1 ? f.map((a, k) => ({ judul: a.judul, dari: a.dari, sampai: a.sampai, mulai: k === 0 ? 0 : '' })) : [] }];
+    MODE_AUDIO = 'satu';
+    pesan('audPesan', 'Mode satu audio: unggah satu rekaman untuk semua Part, isi waktu mulai setiap Part (⏱), lalu Simpan pengaturan audio.', 'info');
+  } else {
+    const a = f[0] || {};
+    AUDIO_G = a.bagian && a.bagian.length ? a.bagian.map((b, k) => ({ judul: b.judul, dari: b.dari, sampai: b.sampai, url: k === 0 ? a.url : '', sekali: true }))
+      : (f.length ? [{ judul: a.judul, dari: a.dari, sampai: a.sampai, url: a.url, sekali: true }] : []);
+    MODE_AUDIO = 'part';
+    pesan('audPesan', 'Mode audio per Part: unggah satu berkas untuk setiap Part, lalu Simpan pengaturan audio.', 'info');
+  }
+  gambarAudioGuru();
+}
+document.addEventListener('change', e => {
+  if (e.target && e.target.name === 'modeAudio') gantiModeAudio(e.target.value);
+  // pratinjau berkas yang baru dipilih (sebelum diunggah) → guru dapat langsung mencari waktu mulai tiap Part
+  if (e.target && e.target.classList && e.target.classList.contains('a-berkas') && e.target.closest('#daftarAudio')) {
+    const f = e.target.files[0], wadah = e.target.parentNode;
+    let pr = wadah.querySelector('audio.a-pratinjau');
+    if (!f) { if (pr) pr.remove(); return; }
+    if (!pr) { pr = document.createElement('audio'); pr.className = 'a-pratinjau'; pr.controls = true; pr.style.cssText = 'width:100%;margin-top:6px'; wadah.appendChild(pr); }
+    if (pr.src) URL.revokeObjectURL(pr.src);
+    pr.src = URL.createObjectURL(f);
+  }
+});
 function bacaFormAudio() {
-  return Array.from(document.querySelectorAll('#daftarAudio .baris-audio')).map(el => ({
+  const f = Array.from(document.querySelectorAll('#daftarAudio .baris-audio')).map(el => ({
     judul: el.querySelector('.a-judul').value.trim(), dari: Number(el.querySelector('.a-dari').value), sampai: Number(el.querySelector('.a-sampai').value),
     url: el.querySelector('.a-url').value.trim(), sekali: el.querySelector('.a-sekali').checked, berkas: el.querySelector('.a-berkas').files[0] || null }));
+  if (MODE_AUDIO === 'satu' && f[0]) f[0].bagian = bacaPenanda().map(b => ({ judul: b.judul, dari: b.dari, sampai: b.sampai, mulai: isFinite(b.mulai) ? b.mulai : b.mulaiTeks }));
+  return f;
 }
 $('btnTambahAudio').onclick = () => {
   AUDIO_G = bacaFormAudio().map(a => Object.assign({}, a, { berkas: undefined }));
@@ -2362,18 +2665,53 @@ $('btnTambahAudio').onclick = () => {
   gambarAudioGuru();
 };
 $('daftarAudio').addEventListener('click', e => {
+  const pb = e.target.closest('.p-ambil, .p-hapus, #btnTambahPenanda');
+  if (pb) {
+    const f = bacaFormAudio().map(a => Object.assign({}, a, { berkas: undefined })), a0 = f[0];
+    if (!a0) return;
+    if (pb.id === 'btnTambahPenanda') {
+      const bg = a0.bagian, akhir = bg.length ? Math.max.apply(null, bg.map(b => b.sampai || a0.dari - 1)) : a0.dari - 1;
+      bg.push({ judul: 'Part ' + (bg.length + 1), dari: Math.min(a0.sampai, akhir + 1), sampai: Math.min(a0.sampai, akhir + 10), mulai: bg.length ? '' : 0 });
+    } else {
+      const j = Number(pb.closest('.baris-penanda').dataset.j);
+      if (pb.classList.contains('p-hapus')) a0.bagian.splice(j, 1);
+      else {
+        const pemutar = document.querySelector('#daftarAudio .baris-audio audio.a-pratinjau') || document.querySelector('#daftarAudio .baris-audio audio');
+        if (!pemutar || !(pemutar.currentTime >= 0) || (!pemutar.currentTime && j > 0)) return kabar('Putar rekaman di atas sampai awal Part ini, lalu tekan ⏱ lagi.');
+        a0.bagian[j].mulai = Math.round(pemutar.currentTime * 10) / 10;
+        const tr = pb.closest('.baris-penanda'); tr.querySelector('.p-mulai').value = teksWaktu(a0.bagian[j].mulai);
+        return;                                                   // tanpa menggambar ulang: rekaman tetap berputar
+      }
+    }
+    AUDIO_G = f; return gambarAudioGuru();
+  }
   const b = e.target.closest('.a-hapus'); if (!b) return;
+  const brk = berkasTerpilih(), i = Number(b.closest('.baris-audio').dataset.i);
   AUDIO_G = bacaFormAudio().map(a => Object.assign({}, a, { berkas: undefined }));
-  AUDIO_G.splice(Number(b.closest('.baris-audio').dataset.i), 1); gambarAudioGuru();
+  AUDIO_G.splice(i, 1); brk.splice(i, 1); gambarAudioGuru(brk);
 });
 $('btnSimpanAudio').onclick = () => tombolProses($('btnSimpanAudio'), 'Menyimpan…', async () => {
   pesan('audPesan', '');
   if (!$('sUjian').value) return pesan('audPesan', 'Pilih ujian dulu.');
   try {
     const form = bacaFormAudio();
-    for (let i = 0; i < form.length; i++) if (form[i].berkas) { pesan('audPesan', 'Mengunggah ' + form[i].berkas.name + '…', 'info'); form[i].url = await unggahMedia(form[i].berkas, $('sUjian').value); }
-    const d = await api('cbtMedia', { op: 'audioUjian', exam_id: $('sUjian').value, daftar: form.map(a => ({ judul: a.judul, dari: a.dari, sampai: a.sampai, url: a.url, sekali: a.sekali })) });
-    AUDIO_G = d.audio; gambarAudioGuru(); pesan('audPesan', d.pesan, 'info'); muatUjian();
+    for (let i = 0; i < form.length; i++) if (form[i].berkas) {          // berkas diuji di peramban dulu: rusak/tidak dapat diputar → tidak diunggah
+      pesan('audPesan', 'Menguji ' + form[i].berkas.name + '…', 'info');
+      const dur = await cekAudioLokal(form[i].berkas);
+      if (/\.(ogg|oga|webm|weba|flac)$/i.test(form[i].berkas.name)) kabar('"' + form[i].berkas.name + '": format ini tidak dapat diputar di sebagian iPhone/iPad. Sebaiknya MP3.');
+      pesan('audPesan', 'Mengunggah ' + form[i].berkas.name + (dur ? ' (' + mmssG(dur) + ')' : '') + '…', 'info');
+      form[i].url = await unggahMedia(form[i].berkas, $('sUjian').value);
+    }
+    const alur = bacaAlurGuru();
+    if (MODE_AUDIO === 'satu') {
+      if (form.length !== 1) throw new Error('Mode satu audio memakai tepat satu rekaman.');
+      const salah = (form[0].bagian || []).find(b => typeof b.mulai !== 'number');
+      if (salah) throw new Error('Penanda "' + salah.judul + '": waktu mulai "' + (salah.mulai || '(kosong)') + '" tidak sah. Tulis menit:detik, mis. 7:30, atau tekan ⏱ dari pemutar.');
+    }
+    const d = await api('cbtMedia', { op: 'audioUjian', exam_id: $('sUjian').value, alur: alur || { aktif: false },
+      daftar: form.map(a => ({ judul: a.judul, dari: a.dari, sampai: a.sampai, url: a.url, sekali: alur ? true : a.sekali, bagian: a.bagian && a.bagian.length ? a.bagian : undefined })) });
+    AUDIO_G = d.audio; ALUR_G = d.alur || null; gambarAudioGuru([]);              // berkas sudah terunggah → pilihan dikosongkan
+    pesan('audPesan', d.pesan + (d.alur ? ' Alur Listening IELTS aktif: membaca ' + d.alur.baca + ' dtk → audio → memeriksa ' + d.alur.cek + ' dtk per Part, kaji ulang ' + d.alur.akhir + ' dtk.' : ''), 'info'); muatUjian();
     if (UJIAN_SOAL && UJIAN_SOAL.acak_soal === 'Ya' && AUDIO_G.length) kabar('Catatan: ujian ini memakai acak urutan soal. Untuk Listening, sebaiknya matikan acak soal agar nomor soal sesuai rekaman.');
   } catch (e) { pesan('audPesan', e.message); }
 });
@@ -2444,7 +2782,9 @@ function rumusPolos(s) {
   return s;
 }
 function _soalPolos() {
-  return SOAL.map(q => { const o = Object.assign({}, q); ['stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan'].forEach(k => { if (o[k]) o[k] = rumusPolos(o[k]); }); return o; });
+  return SOAL.map(q => { const o = Object.assign({}, q); ['stimulus_text', 'teks_soal', 'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e', 'pembahasan'].forEach(k => { if (o[k]) o[k] = rumusPolos(o[k]); });
+    if (o.teks_soal && tautanLuarSoal(o.teks_soal)) o.teks_soal = tanpaTautanLuar(o.teks_soal) + '\n(Tes Speaking dikerjakan di website: ' + tautanLuarSoal(o.teks_soal) + ')';
+    return o; });
 }
 async function unduhNaskahDocx(versi) { const asli = SOAL; SOAL = _soalPolos(); try { return await _unduhNaskahDocx(versi); } finally { SOAL = asli; } }
 async function unduhNaskahPdf(versi) { const asli = SOAL; SOAL = _soalPolos(); try { return await _unduhNaskahPdf(versi); } finally { SOAL = asli; } }
@@ -2775,14 +3115,17 @@ async function panelSpeaking() {
         <div class="aksi" style="margin:0 0 10px"><button class="tombol netral kecil" id="spSemua">⬇ Unduh semua rekaman (${d.siswa.reduce((a, s) => a + s.rekaman.filter(Boolean).length, 0)} berkas, satu per satu)</button></div>
         <div class="gulir"><table><thead><tr><th>Siswa</th>${d.butir.map(b => `<th>${teks(b.bagian || 'Soal ' + b.no)}</th>`).join('')}<th>Band/nilai</th><th></th></tr></thead><tbody>
         ${d.siswa.map(s => `<tr><td><b>${teks(s.nama)}</b><br><span class="ket">${teks(s.nisn)} · ${teks(s.kelas)}</span></td>
-          ${s.rekaman.map((r, i) => r ? `<td style="white-space:nowrap"><button class="tombol netral kecil" data-putar="${s.session_id}|${r.qid}">▶ ${mm(r.d)}</button> <button class="tombol netral kecil" data-unduh="${s.session_id}|${r.qid}">⬇</button></td>` : '<td class="ket">—</td>').join('')}
+          ${s.rekaman.map((r, i) => r ? (r.bukti ? `<td style="white-space:nowrap"><span class="tanda">band ${teks(String(r.band))}</span> <button class="tombol netral kecil" data-putar="${s.session_id}|${r.qid}" title="${teks(r.catatan || '')}">🖼 Screenshot</button> <button class="tombol netral kecil" data-unduh="${s.session_id}|${r.qid}">⬇</button></td>`
+            : `<td style="white-space:nowrap"><button class="tombol netral kecil" data-putar="${s.session_id}|${r.qid}">▶ ${mm(r.d)}</button> <button class="tombol netral kecil" data-unduh="${s.session_id}|${r.qid}">⬇</button></td>`) : '<td class="ket">—</td>').join('')}
           <td>${teks(s.speaking === '' ? '—' : s.speaking)}</td><td>${s.status !== 'In Progress' ? `<button class="tombol kecil" data-nilai="${s.session_id}">Nilai</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
-        <audio id="spPemutar" controls style="width:100%;margin-top:10px" class="sembunyi"></audio><div class="pesan" id="spPesan"></div>`,
+        <audio id="spPemutar" controls style="width:100%;margin-top:10px" class="sembunyi"></audio><img id="spGambar" class="sembunyi bukti-speaking" alt="Screenshot hasil Speaking"><div class="pesan" id="spPesan"></div>`,
       siap: () => {
         $('mIsi').onclick = async e => {
           const b = e.target.closest('button'); if (!b) return;
           try {
-            if (b.dataset.putar) { const [sid, q] = b.dataset.putar.split('|'); b.disabled = true; const r = await ambilRekaman(sid, q); b.disabled = false; $('spPemutar').classList.remove('sembunyi'); $('spPemutar').src = r.url; $('spPemutar').play().catch(() => { }); }
+            if (b.dataset.putar) { const [sid, q] = b.dataset.putar.split('|'); b.disabled = true; const r = await ambilRekaman(sid, q); b.disabled = false;
+              if (/^image\//.test(r.blob.type)) { $('spPemutar').classList.add('sembunyi'); $('spGambar').src = r.url; $('spGambar').classList.remove('sembunyi'); $('spGambar').scrollIntoView({ block: 'nearest' }); }
+              else { $('spGambar').classList.add('sembunyi'); $('spPemutar').classList.remove('sembunyi'); $('spPemutar').src = r.url; $('spPemutar').play().catch(() => { }); } }
             if (b.dataset.unduh) { const [sid, q] = b.dataset.unduh.split('|'); b.disabled = true; const r = await ambilRekaman(sid, q); b.disabled = false; unduhBlob(r.blob, r.nama); }
             if (b.dataset.nilai) { $('tirai').classList.add('sembunyi'); bukaEsai(b.dataset.nilai); }
             if (b.id === 'spSemua') {
@@ -2824,7 +3167,11 @@ async function bukaEsai(id) {
   try {
     const d = await api('cbtEsai', { session_id: id });
     const ielts = d.skema === 'IELTS';
-    const jwb = q => q.tipe === 'SPEAKING'
+    const jwb = q => q.tipe === 'SPEAKING' && q.rekaman && q.rekaman.bukti
+      ? `<div class="esai-jwb">Tes di website${q.luar ? ` (<a href="${teks(q.luar)}" target="_blank" rel="noopener">buka</a>)` : ''} · band dilaporkan siswa: <b>${teks(String(q.rekaman.band))}</b>${q.rekaman.catatan ? '<br>Catatan siswa: ' + teks(q.rekaman.catatan) : ''}</div>
+        <div class="aksi" style="margin:6px 0"><button type="button" class="tombol netral kecil" data-putar="${id}|${q.qid}">🖼 Lihat screenshot</button><button type="button" class="tombol netral kecil" data-unduh="${id}|${q.qid}">⬇ Unduh</button></div>
+        <img class="bukti-speaking sembunyi" data-gambar="${teks(q.qid)}" alt="Screenshot hasil Speaking"><p class="ket">Periksa kecocokan screenshot dengan band yang dilaporkan. Band ini dipakai sebagai nilai Speaking kecuali guru mengisi nilai lain.</p>`
+      : q.tipe === 'SPEAKING'
       ? (q.rekaman ? `<div class="aksi" style="margin:6px 0"><button type="button" class="tombol netral kecil" data-putar="${id}|${q.qid}">▶ Putar rekaman (${Math.floor(q.rekaman.d / 60)}:${String(q.rekaman.d % 60).padStart(2, '0')})</button><button type="button" class="tombol netral kecil" data-unduh="${id}|${q.qid}">⬇ Unduh</button></div>` : '<div class="esai-jwb">(tidak ada rekaman)</div>')
       : Array.isArray(q.jawaban)
       ? (q.bagianSoal || []).map((b, i) => `<div class="ket" style="margin-top:6px"><b>${teks(b)}</b></div><div class="esai-jwb">${teks(q.jawaban[i] || '(tidak dijawab)')}</div>`).join('')
@@ -2835,7 +3182,7 @@ async function bukaEsai(id) {
       d.esai.map((q, i) => `<div class="blok-esai"><p style="margin:12px 0 2px"><b>${q.tipe === 'SPEAKING' ? '🎙 Speaking' : 'Butir'} ${i + 1}</b>${q.bagian ? ' · ' + teks(q.bagian) : ''} <span class="tanda">${teks(q.tipe)}</span>
         ${q.tipe !== 'SPEAKING' ? `<span class="tanda ${minKata(q) && q.kata < minKata(q) ? 'merah' : ''}">${q.kata} kata${minKata(q) ? ' / min. ' + minKata(q) : ''}</span>` : ''}</p>
         ${q.stimulus ? `<details><summary>Kasus/stimulus</summary><div class="ket" style="white-space:pre-wrap">${teks(q.stimulus)}</div></details>` : ''}
-        <div class="ket">${teks(q.teks)}</div>${jwb(q)}${q.pembahasan ? `<details><summary>Rubrik/pembahasan</summary><div class="ket" style="white-space:pre-wrap">${teks(q.pembahasan)}</div></details>` : ''}
+        <div class="ket">${teks(tanpaTautanLuar(q.teks))}</div>${jwb(q)}${q.pembahasan ? `<details><summary>Rubrik/pembahasan</summary><div class="ket" style="white-space:pre-wrap">${teks(q.pembahasan)}</div></details>` : ''}
         ${ielts && q.tipe !== 'SPEAKING' ? kriteria(q.qid, KRITERIA_W, q.kriteria) : ''}
         ${ielts && q.tipe === 'SPEAKING' ? '' : `<label>Nilai ${q.tipe === 'SPEAKING' ? 'speaking' : 'butir'} ${i + 1} (0–${q.maks})</label><input type="number" class="nilai-esai" data-q="${teks(q.qid)}" min="0" max="${q.maks}" step="0.5" value="${q.nilai}">`}</div>`).join('') +
       (d.speaking ? `<div class="blok-esai"><p style="margin:14px 0 2px"><b>Speaking — band keseluruhan</b></p>${ielts ? kriteria('_speaking', KRITERIA_S, d.kriteriaSpeaking) : ''}
@@ -2849,7 +3196,9 @@ async function bukaEsai(id) {
         $('mIsi').onclick = async e => {
           const b = e.target.closest('button[data-putar],button[data-unduh]'); if (!b) return;
           try { const [sid, q] = (b.dataset.putar || b.dataset.unduh).split('|'); b.disabled = true; const r = await ambilRekaman(sid, q); b.disabled = false;
-            if (b.dataset.unduh) unduhBlob(r.blob, r.nama); else { $('esPemutar').classList.remove('sembunyi'); $('esPemutar').src = r.url; $('esPemutar').play().catch(() => { }); } }
+            if (b.dataset.unduh) unduhBlob(r.blob, r.nama);
+            else if (/^image\//.test(r.blob.type)) { const g = document.querySelector('#mIsi img[data-gambar="' + q + '"]'); if (g) { g.src = r.url; g.classList.toggle('sembunyi'); } }
+            else { $('esPemutar').classList.remove('sembunyi'); $('esPemutar').src = r.url; $('esPemutar').play().catch(() => { }); } }
           catch (er) { b.disabled = false; pesan('mGalat', er.message); }
         };
       },
@@ -3015,6 +3364,8 @@ async function muatKonfigSert() {
     ['sfLembaga', 'sfKepala', 'sfNip', 'sfKota', 'sfJabatan', 'sfJabatanEn', 'sfPenguji', 'sfNipPenguji'].forEach(id => $(id).disabled = !d.admin);
     tampilTtd('kepala', d.ttd.kepala, d.admin); tampilTtd('penguji', d.ttd.penguji, d.admin); TTD_SERT = d.ttd;
     $('kartuServer').classList.toggle('sembunyi', !d.admin);
+    $('kartuSehat').classList.toggle('sembunyi', !d.admin);
+    if (d.admin && !$('sehatHasil').innerHTML) { tampilDiagnosaTerakhir(); muatLogGalat(); }
     if (d.admin && $('kapIsi').textContent === '—') periksaKapasitas();
     $('btnSimpanSert').classList.toggle('sembunyi', !d.admin);
     if (!d.admin) pesan('sfPesan', 'Hanya admin yang dapat mengubah pengaturan ini.', 'info');
@@ -3251,6 +3602,112 @@ async function riwayatNilai() {
   } catch (e) { kabar(e.message); }
 }
 $('btnRiwayatNilai').onclick = () => { if ($('pUjian').value) riwayatNilai(); };
+
+const mmssG = d => { d = Math.max(0, Math.round(d || 0)); return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); };
+/* =========================== AUDIO: uji sebelum unggah & Periksa audio =========================== */
+/** Muat metadata sebuah alamat audio di peramban ini → panjang rekaman (detik) atau galat. */
+function ujiMuatAudio(src, batasMs) {
+  return new Promise((res, rej) => {
+    const a = new Audio(); a.preload = 'metadata'; a.muted = true;
+    const tutup = f => { clearTimeout(h); a.onloadedmetadata = a.onerror = null; try { a.removeAttribute('src'); a.load(); } catch (e) { } f(); };
+    const h = setTimeout(() => tutup(() => rej(new Error('tidak ada respons dalam ' + Math.round((batasMs || 20000) / 1000) + ' detik'))), batasMs || 20000);
+    a.onloadedmetadata = () => { const d = a.duration; tutup(() => (d > 0.5 || d === Infinity) ? res(isFinite(d) ? d : 0) : rej(new Error('tidak berisi suara'))); };
+    a.onerror = () => tutup(() => rej(new Error('rusak atau format tidak didukung')));
+    a.src = src;
+  });
+}
+/** Berkas audio dari komputer guru diuji dulu: dapat diputar? berapa panjangnya? (berkas rusak tidak sampai terunggah) */
+async function cekAudioLokal(berkas) {
+  const u = URL.createObjectURL(berkas);
+  try { return await ujiMuatAudio(u, 20000); }
+  catch (e) { throw new Error('"' + berkas.name + '" ' + e.message + '. Ekspor ulang sebagai MP3 (mis. lewat Audacity/konverter online) lalu pilih lagi.'); }
+  finally { URL.revokeObjectURL(u); }
+}
+/** Uji putar satu Part seperti di perangkat siswa: alamat Drive langsung → bila gagal, lewat server. */
+async function ujiPutarPart(a) {
+  const daftar = /#audio-privat/.test(a.url) ? [] : sumberMedia(a.url).filter(u => !/^data:/.test(u));
+  let alasan = '';
+  for (const u of daftar) { try { return { durasi: await ujiMuatAudio(u, 15000), jalur: 'langsung dari Google Drive' }; } catch (e) { alasan = e.message; } }
+  const id = idDrive(a.url);
+  if (!id) throw new Error('tautan tidak dapat diputar' + (alasan ? ' (' + alasan + ')' : ''));
+  const url = await unduhAudioServer(id, { exam_id: $('sUjian').value });
+  try { return { durasi: await ujiMuatAudio(url, 20000), jalur: 'lewat server' + (daftar.length ? ' (Drive langsung gagal di jaringan ini)' : ' (berbagi publik dilarang)') }; }
+  finally { URL.revokeObjectURL(url); }
+}
+async function periksaAudioGuru() {
+  if (!$('sUjian').value) return pesan('audPesan', 'Pilih ujian dulu.');
+  pesan('audPesan', '');
+  $('audPeriksa').innerHTML = '<p class="ket">Memeriksa berkas audio di server…</p>';
+  const d = await api('cbtMedia', { op: 'periksaAudio', exam_id: $('sUjian').value }, { batas: 300000 });
+  if (!d.hasil.length) { $('audPeriksa').innerHTML = '<p class="ket">Belum ada audio Listening yang tersimpan untuk ujian ini.</p>'; return; }
+  let total = 0, bermasalah = 0;
+  for (let i = 0; i < d.hasil.length; i++) {
+    const a = d.hasil[i];
+    $('audPeriksa').innerHTML = '<p class="ket">Menguji pemutaran ' + teks(a.judul) + ' (' + (i + 1) + '/' + d.hasil.length + ')…</p>';
+    if (!a.masalah.length) {
+      try { a.uji = await ujiPutarPart(a); total += a.uji.durasi || 0; }
+      catch (e) { a.masalah.push('Tidak dapat diputar di peramban ini: ' + e.message); }
+      if (a.uji && a.uji.durasi && a.bagian) a.bagian.forEach(b => { if (b.mulai >= a.uji.durasi) a.masalah.push('Penanda ' + b.judul + ' (' + mmssG(b.mulai) + ') melewati panjang rekaman (' + mmssG(a.uji.durasi) + ').'); });
+    }
+    if (a.masalah.length) bermasalah++;
+  }
+  const al = typeof bacaAlurGuru === 'function' ? bacaAlurGuru() : null;
+  const tambah = al ? (d.hasil.length * (al.baca + al.cek) + al.akhir) : 0, saran = Math.ceil((total + tambah) / 60) + 1;
+  $('audPeriksa').innerHTML = `<div class="gulir"><table class="audio-uji"><thead><tr><th>Part</th><th>Soal</th><th>Berkas</th><th>Panjang</th><th>Diputar siswa</th><th>Hasil</th></tr></thead><tbody>
+    ${d.hasil.map(a => `<tr><td><b>${teks(a.judul)}</b>${a.bagian && a.bagian.length ? '<br><span class="ket">' + a.bagian.map(b => teks(b.judul) + ' @' + mmssG(b.mulai)).join('<br>') + '</span>' : ''}</td><td>${a.dari}–${a.sampai}</td><td>${a.luar ? 'tautan luar' : teks((a.format || '?') + ' · ' + Math.round((a.ukuran || 0) / 1024) + ' KB')}</td>
+      <td>${a.uji && a.uji.durasi ? mmssG(a.uji.durasi) : '—'}</td><td>${a.uji ? teks(a.uji.jalur) : '—'}</td>
+      <td>${a.masalah.length ? a.masalah.map(m => '<span class="tanda merah">✗</span> ' + teks(m)).join('<br>') : '<span class="tanda hijau">✓ utuh &amp; dapat diputar</span>'}
+        ${a.diperbaiki.map(m => '<br><span class="tanda biru">diperbaiki</span> ' + teks(m)).join('')}${a.peringatan.map(m => '<br><span class="tanda kuning">!</span> ' + teks(m)).join('')}</td></tr>`).join('')}</tbody></table></div>
+    <p class="ket" style="margin-top:8px">Total rekaman <b>${mmssG(total)}</b>${al ? ' + waktu alur ' + mmssG(tambah) : ''} → durasi subtes Listening yang disarankan: <b>${saran} menit</b> (sudah termasuk 1 menit cadangan).
+      ${bermasalah ? '<br><b style="color:var(--salah)">' + bermasalah + ' audio bermasalah — perbaiki sebelum ujian (unggah ulang Part tersebut).</b>' : ''}</p>`;
+  await muatSoal();
+}
+$('btnPeriksaAudio').onclick = () => tombolProses($('btnPeriksaAudio'), 'Memeriksa…', async () => { try { await periksaAudioGuru(); } catch (e) { $('audPeriksa').innerHTML = ''; pesan('audPesan', e.message); } });
+
+/* =========================== KESEHATAN SISTEM (admin) =========================== */
+const LABEL_SEHAT = { ok: ['hijau', '✓ Sehat'], peringatan: ['kuning', '! Peringatan'], galat: ['merah', '✗ Galat'], diperbaiki: ['biru', '🛠 Diperbaiki'] };
+function gambarDiagnosa(d, judul) {
+  const r = d.ringkas || {}, urut = { galat: 0, peringatan: 1, diperbaiki: 2, ok: 3 };
+  const hasil = (d.hasil || []).slice().sort((a, b) => urut[a.status] - urut[b.status]);
+  $('sehatHasil').innerHTML = `<p class="ket" style="margin:10px 0 0">${teks(judul)} · ${new Date(d.waktu).toLocaleString('id-ID')} · build ${teks(d.build || '')}</p>
+    <div class="sehat-ringkas">${['galat', 'peringatan', 'diperbaiki', 'ok'].map(k => `<span class="tanda ${LABEL_SEHAT[k][0]}">${LABEL_SEHAT[k][1]}: ${r[k] || 0}</span>`).join('')}</div>
+    ${!r.galat && !r.peringatan ? '<p class="pesan info" style="display:block">Semua pemeriksaan sehat. Sistem siap dipakai.</p>' : ''}
+    <div class="gulir"><table class="sehat-tabel"><thead><tr><th>Status</th><th>Bagian</th><th>Hasil</th><th>Saran</th></tr></thead><tbody>
+    ${hasil.map(h => `<tr><td><span class="tanda ${LABEL_SEHAT[h.status][0]}">${LABEL_SEHAT[h.status][1]}</span></td><td><b>${teks(h.kat)}</b><br><span class="ket">${teks(h.nama)}</span></td>
+      <td>${teks(h.pesan)}</td><td class="saran">${teks(h.saran || '')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+async function tampilDiagnosaTerakhir() {
+  try { const d = await api('sistem', { op: 'terakhir' }, { coba: 2 }); if (d.terakhir) gambarDiagnosa(d.terakhir, 'Pemeriksaan otomatis terakhir'); else $('sehatHasil').innerHTML = '<p class="ket">Belum ada pemeriksaan. Tekan <b>Periksa sekarang</b>.</p>'; }
+  catch (e) { $('sehatHasil').innerHTML = ''; }
+}
+async function muatLogGalat() {
+  try {
+    const d = await api('sistem', { op: 'log' }, { coba: 2 });
+    const warna = { Baru: 'merah', 'Muncul lagi': 'merah', Selesai: 'hijau' };
+    $('sehatLog').innerHTML = d.log.length ? `<div class="gulir"><table class="sehat-tabel"><thead><tr><th>Status</th><th>Sumber</th><th>Galat</th><th>×</th><th>Terakhir</th><th>Contoh perangkat / sesi</th><th></th></tr></thead><tbody>
+      ${d.log.map(r => `<tr><td><span class="tanda ${warna[r.status] || 'kuning'}">${teks(r.status)}</span></td><td>${teks(r.sumber)}<br><span class="ket">${teks(r.jenis)}</span></td>
+        <td>${teks(r.pesan)}<br><span class="ket">${teks(r.lokasi)}</span></td><td><b>${r.jumlah}</b></td><td>${r.terakhir ? new Date(r.terakhir).toLocaleString('id-ID') : ''}<br><span class="ket">${teks(r.build)}</span></td>
+        <td class="saran">${teks(r.contoh)}</td><td>${r.status !== 'Selesai' ? `<button class="tombol netral kecil" data-tandai="${teks(r.kode)}">✓ Selesai</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="pesan info" style="display:block">Tidak ada galat tercatat.</p>';
+  } catch (e) { $('sehatLog').innerHTML = '<p class="pesan galat" style="display:block">' + teks(e.message) + '</p>'; }
+}
+async function jalankanDiagnosa(perbaiki) {
+  const b = perbaiki ? $('btnPerbaiki') : $('btnDiagnosa');
+  await tombolProses(b, perbaiki ? 'Memeriksa & memperbaiki…' : 'Memeriksa…', async () => {
+    try { gambarDiagnosa(await api('sistem', { op: 'diagnosa', perbaiki: !!perbaiki }, { batas: 330000, coba: 2 }), perbaiki ? 'Hasil periksa & perbaiki otomatis' : 'Hasil pemeriksaan'); await muatLogGalat(); }
+    catch (e) { $('sehatHasil').innerHTML = '<p class="pesan galat" style="display:block">' + teks(e.message) + '</p>'; }
+  });
+}
+$('btnDiagnosa').onclick = () => jalankanDiagnosa(false);
+$('btnPerbaiki').onclick = () => jalankanDiagnosa(true);
+$('btnLogMuat').onclick = () => tombolProses($('btnLogMuat'), 'Memuat…', muatLogGalat);
+$('btnLogTandai').onclick = () => tombolProses($('btnLogTandai'), 'Menandai…', async () => { try { kabar((await api('sistem', { op: 'tandai' })).pesan); await muatLogGalat(); } catch (e) { kabar(e.message); } });
+$('btnLogBersih').onclick = () => tombolProses($('btnLogBersih'), 'Menghapus…', async () => { try { kabar((await api('sistem', { op: 'bersihkan' })).pesan); await muatLogGalat(); } catch (e) { kabar(e.message); } });
+$('sehatLog').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-tandai]'); if (!b) return;
+  b.disabled = true;
+  try { await api('sistem', { op: 'tandai', kode: [b.dataset.tandai] }); await muatLogGalat(); } catch (er) { b.disabled = false; kabar(er.message); }
+});
 /* <</GURU-TAMBAHAN>> */
 /* =====================================================================
    TRY OUT UTBK (ADMIN) — modul tertutup agar nama fungsi tidak bentrok dengan portal guru
@@ -3612,4 +4069,4 @@ window.bukaTryout = async function () {
 <script>window.__berkasUtuh = true;</script>
 </body>
 </html>
-<!-- AKHIR BERKAS Guru · 336798 -->
+<!-- AKHIR BERKAS Guru · 377664 -->
